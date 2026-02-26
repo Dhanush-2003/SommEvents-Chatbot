@@ -1,10 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SommEvents Chat</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="chat"></div>
+  <!-- Floating Bubble -->
+  <button id="chat-bubble" aria-label="Open chat">
+    💬
+  </button>
+
+  <!-- Chat Panel -->
+  <div id="chat-panel" class="hidden" role="dialog" aria-label="SommEvents Chatbot">
+    <div id="chat-header">
+      <div>
+        <div class="title">SommEvents</div>
+        <div class="subtitle">How can we help?</div>
+      </div>
+      <button id="chat-close" aria-label="Close chat">✕</button>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <div id="chat-actions"></div>
+
+    <div id="chat-footer">
+      <input id="chat-input" placeholder="Type a message (optional)..." />
+      <button id="chat-send" type="button">Send</button>
+    </div>
+  </div>
 
   <script src="knowledge.js"></script>
   <script src="chatbot.js"></script>
