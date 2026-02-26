@@ -88,6 +88,29 @@ const knowledge = {
     next: "lead_capture"
   },
 
+  team_building: {
+    message: "What kind of team building or experience are you looking for?",
+    options: [
+      { label: "Wine tasting or workshop" },
+      { label: "Cooking or culinary experience" },
+      { label: "Outdoor or adventure activity" },
+      { label: "Virtual team experience" },
+      { label: "Custom or unique experience" }
+    ],
+    next: "team_building_scope"
+  },
+
+  team_building_scope: {
+    message: "How large is your group?",
+    options: [
+      { label: "Small (2–15 people)" },
+      { label: "Medium (16–40 people)" },
+      { label: "Large (41–100 people)" },
+      { label: "100+ people" }
+    ],
+    next: "lead_capture"
+  },
+
   human: {
     message: "I can connect you with our team. Would you like us to reach out?",
     options: [
