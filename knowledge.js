@@ -37,12 +37,7 @@ const knowledge = {
   event_details: {
     message: "To help us guide you better, which details do you have?",
     capture: true,
-    fields: [
-      "Event date or timeframe",
-      "Number of guests",
-      "Location or city",
-      "Budget range"
-    ],
+    fields: ["Event date or timeframe", "Number of guests", "Location or city", "Budget range"],
     next: "event_cta"
   },
 
@@ -69,12 +64,7 @@ const knowledge = {
 
   gifting_scale: {
     message: "How many recipients are you gifting?",
-    options: [
-      { label: "1–10" },
-      { label: "11–50" },
-      { label: "51–200" },
-      { label: "200+" }
-    ],
+    options: [{ label: "1–10" }, { label: "11–50" }, { label: "51–200" }, { label: "200+" }],
     next: "lead_capture"
   },
 
