@@ -1,4 +1,5 @@
 let currentNodeKey = "mainMenu";
+let typingEl = null;
 
 const bubble = document.getElementById("chat-bubble");
 const panel = document.getElementById("chat-panel");
@@ -23,13 +24,35 @@ function addMessage(text, who = "bot") {
   div.className = `msg ${who}`;
   div.textContent = text;
   messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: "smooth" });
+}
+
+function showTypingIndicator() {
+  hideTypingIndicator();
+  const div = document.createElement("div");
+  div.className = "msg bot typing-indicator";
+  for (let i = 0; i < 3; i++) {
+    const dot = document.createElement("span");
+    dot.className = "typing-dot";
+    div.appendChild(dot);
+  }
+  messagesEl.appendChild(div);
+  messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: "smooth" });
+  typingEl = div;
+}
+
+function hideTypingIndicator() {
+  if (typingEl) {
+    typingEl.remove();
+    typingEl = null;
+  }
 }
 
 function clearActions() { actionsEl.innerHTML = ""; }
 
 function addQuickReplies(options, fallbackNext = null) {
   clearActions();
+  const buttons = [];
   options.forEach(opt => {
     const btn = document.createElement("button");
     btn.className = "quick";
@@ -37,6 +60,8 @@ function addQuickReplies(options, fallbackNext = null) {
     btn.textContent = opt.label;
 
     btn.onclick = () => {
+      buttons.forEach(b => { b.disabled = true; });
+
       addMessage(opt.label, "user");
 
       const lower = opt.label.toLowerCase();
@@ -49,6 +74,7 @@ function addQuickReplies(options, fallbackNext = null) {
       else if (fallbackNext) renderNode(fallbackNext);
     };
 
+    buttons.push(btn);
     actionsEl.appendChild(btn);
   });
 }
@@ -56,42 +82,50 @@ function addQuickReplies(options, fallbackNext = null) {
 function renderLeadForm() {
   clearActions();
 
-  const name = document.createElement("input");
-  name.placeholder = "Name";
-  name.className = "quick";
-  name.style.borderRadius = "12px";
-  name.style.flex = "1";
-  name.style.whiteSpace = "normal";
+  const nameInput = document.createElement("input");
+  nameInput.placeholder = "Your name";
+  nameInput.className = "form-input";
+  nameInput.type = "text";
 
-  const email = document.createElement("input");
-  email.placeholder = "Email";
-  email.className = "quick";
-  email.style.borderRadius = "12px";
-  email.style.flex = "1";
-  email.style.whiteSpace = "normal";
+  const emailInput = document.createElement("input");
+  emailInput.placeholder = "Your email address";
+  emailInput.className = "form-input";
+  emailInput.type = "email";
 
   const submit = document.createElement("button");
   submit.className = "quick";
   submit.type = "button";
   submit.textContent = "Submit";
 
-  submit.onclick = () => {
-    const n = name.value.trim();
-    const e = email.value.trim();
+  nameInput.addEventListener("input", () => nameInput.classList.remove("error"));
+  emailInput.addEventListener("input", () => emailInput.classList.remove("error"));
 
-    if (!n || !e || !e.includes("@")) {
-      addMessage("Quick check—please enter a name and a valid email.", "bot");
+  submit.onclick = () => {
+    const n = nameInput.value.trim();
+    const e = emailInput.value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!n) {
+      nameInput.classList.add("error");
+      nameInput.focus();
+      return;
+    }
+    if (!e || !emailRegex.test(e)) {
+      emailInput.classList.add("error");
+      emailInput.focus();
       return;
     }
 
-    addMessage(`Submitted: ${n} (${e})`, "user");
-    addMessage("Thanks! Our team will follow up shortly. Anything else you’d like help with?", "bot");
+    clearActions();
+    addMessage(`${n} (${e})`, "user");
+    addMessage("✅ Thanks! Our team will follow up shortly. Anything else I can help with?", "bot");
     renderNode("mainMenu");
   };
 
-  actionsEl.appendChild(name);
-  actionsEl.appendChild(email);
+  actionsEl.appendChild(nameInput);
+  actionsEl.appendChild(emailInput);
   actionsEl.appendChild(submit);
+  nameInput.focus();
 }
 
 function renderChecklist(fields, nextKey) {
@@ -104,15 +138,14 @@ function renderChecklist(fields, nextKey) {
     btn.className = "quick";
     btn.type = "button";
     btn.textContent = f;
-    btn.style.opacity = "0.6";
 
     btn.onclick = () => {
       if (selected.has(f)) {
         selected.delete(f);
-        btn.style.opacity = "0.6";
+        btn.classList.remove("active");
       } else {
         selected.add(f);
-        btn.style.opacity = "1";
+        btn.classList.add("active");
       }
     };
 
@@ -122,7 +155,7 @@ function renderChecklist(fields, nextKey) {
   const cont = document.createElement("button");
   cont.className = "quick";
   cont.type = "button";
-  cont.textContent = "Continue";
+  cont.textContent = "Continue \u2192";
 
   cont.onclick = () => {
     const picked = selected.size ? Array.from(selected).join(", ") : "No details yet";
@@ -137,30 +170,37 @@ function renderNode(nodeKey) {
   currentNodeKey = nodeKey;
   const node = knowledge[nodeKey];
 
+  clearActions();
+
   if (!node) {
     addMessage("I want to make sure I help you properly. Please pick an option below.", "bot");
     renderNode("mainMenu");
     return;
   }
 
-  addMessage(node.message, "bot");
+  showTypingIndicator();
 
-  if (node.capture && node.fields && node.next) {
-    renderChecklist(node.fields, node.next);
-    return;
-  }
+  setTimeout(() => {
+    hideTypingIndicator();
+    addMessage(node.message, "bot");
 
-  if (node.form) {
-    renderLeadForm();
-    return;
-  }
+    if (node.capture && node.fields && node.next) {
+      renderChecklist(node.fields, node.next);
+      return;
+    }
 
-  if (node.options) {
-    addQuickReplies(node.options, node.next || null);
-    return;
-  }
+    if (node.form) {
+      renderLeadForm();
+      return;
+    }
 
-  addQuickReplies([{ label: "Back to menu", next: "mainMenu" }]);
+    if (node.options) {
+      addQuickReplies(node.options, node.next || null);
+      return;
+    }
+
+    addQuickReplies([{ label: "Back to menu", next: "mainMenu" }]);
+  }, 600);
 }
 
 function handleTyped() {
