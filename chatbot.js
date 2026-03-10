@@ -13,13 +13,15 @@
   const resetBtn = UI.$("chat-reset");
   const inputEl  = UI.$("chat-input");
   const sendBtn  = UI.$("chat-send");
-  const faqSearch      = UI.$("faq-search");
-  const faqSearchClose = UI.$("faq-search-close");
-  const searchWrapper  = UI.$("search-wrapper");
+  const faqSearch       = UI.$("faq-search");
+  const faqSearchClose  = UI.$("faq-search-close");
+  const faqSearchToggle = UI.$("faq-search-toggle");
+  const searchWrapper   = UI.$("search-wrapper");
 
   /* ---- State ---- */
   let currentNodeKey = "mainMenu";
   let conversationHistory = [];
+  let selectedDateTime = null;  // stores calendar widget selection
   const TYPING_DELAY = 500;  // ms typing indicator
   const URGENCY_KEYWORDS = ["urgent", "asap", "immediately", "rush", "last minute", "tomorrow", "next week"];
   const HUMAN_KEYWORDS = ["talk", "human", "person", "someone", "agent", "call", "speak", "representative"];
@@ -128,6 +130,17 @@
       return;
     }
 
+    // Calendar widget
+    if (node.calendar) {
+      UI.renderCalendarWidget((dateTime) => {
+        selectedDateTime = dateTime;
+        addUserMessage(`Preferred time: ${dateTime}`);
+        addBotMessage(`${dateTime} is noted! 📅 Let's get your contact details to confirm the consultation:`);
+        renderNodeActions(knowledge["lead_capture_phone"], "lead_capture_phone");
+      });
+      return;
+    }
+
     // Lead form
     if (node.form) {
       const fields = node.formFields || ["name", "email"];
@@ -138,10 +151,20 @@
           : `${data.name} — ${data.email}`;
         addUserMessage(summary);
 
-        // Track lead
-        Analytics.trackLead(data);
+        // Attach selected consultation time if present
+        const leadData = selectedDateTime
+          ? { ...data, consultationTime: selectedDateTime }
+          : data;
+        selectedDateTime = null;
 
-        addBotMessage("✅ Thanks! Our team will follow up within 24 hours. Is there anything else I can help with?");
+        // Track lead
+        Analytics.trackLead(leadData);
+
+        const confirmMsg = leadData.consultationTime
+          ? `✅ Thanks, ${data.name}! Your consultation request for "${leadData.consultationTime}" is received. We'll confirm shortly.`
+          : "✅ Thanks! Our team will follow up within 24 hours. Is there anything else I can help with?";
+
+        addBotMessage(confirmMsg);
         UI.renderButtons(
           [{ label: "Back to main menu", next: "mainMenu" }, { label: "I'm all set!", next: "_end" }],
           (opt) => {
@@ -591,6 +614,9 @@
   }
   if (faqSearchClose) {
     faqSearchClose.addEventListener("click", () => toggleFAQSearch(false));
+  }
+  if (faqSearchToggle) {
+    faqSearchToggle.addEventListener("click", () => toggleFAQSearch(true));
   }
 
   // Keyboard: Escape to close

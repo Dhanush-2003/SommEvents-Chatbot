@@ -195,6 +195,94 @@ const UI = (() => {
   }
 
   /**
+   * Render a consultation calendar (date + time slot picker).
+   * @param {Function} onSelect – callback(dateTimeString)
+   */
+  function renderCalendarWidget(onSelect) {
+    clearActions();
+
+    const days = getNextBusinessDays(5);
+    const times = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
+
+    // Date picker label
+    const dateLabel = document.createElement("p");
+    dateLabel.className = "cal-label";
+    dateLabel.textContent = "Select a date:";
+    actionsEl.appendChild(dateLabel);
+
+    const dateGrid = document.createElement("div");
+    dateGrid.className = "cal-date-grid";
+
+    days.forEach(day => {
+      const btn = document.createElement("button");
+      btn.className = "cal-date-btn";
+      btn.type = "button";
+      btn.innerHTML = `<strong>${day.dayName}</strong><br/>${day.monthDay}`;
+      btn.setAttribute("aria-label", day.full);
+
+      btn.onclick = () => {
+        clearActions();
+
+        const timeLabel = document.createElement("p");
+        timeLabel.className = "cal-label";
+        timeLabel.textContent = `${day.dayName} ${day.monthDay} — choose a time:`;
+        actionsEl.appendChild(timeLabel);
+
+        const timeGrid = document.createElement("div");
+        timeGrid.className = "cal-time-grid";
+
+        times.forEach(time => {
+          const tbtn = document.createElement("button");
+          tbtn.className = "cal-time-btn";
+          tbtn.type = "button";
+          tbtn.textContent = time;
+          tbtn.setAttribute("aria-label", `${day.full} at ${time}`);
+          tbtn.onclick = () => onSelect(`${day.full} at ${time}`);
+          timeGrid.appendChild(tbtn);
+        });
+
+        actionsEl.appendChild(timeGrid);
+
+        const back = document.createElement("button");
+        back.className = "cal-back-btn";
+        back.type = "button";
+        back.textContent = "← Choose a different date";
+        back.onclick = () => renderCalendarWidget(onSelect);
+        actionsEl.appendChild(back);
+      };
+
+      dateGrid.appendChild(btn);
+    });
+
+    actionsEl.appendChild(dateGrid);
+  }
+
+  /** Generate the next N business days (Mon–Fri) starting tomorrow. */
+  function getNextBusinessDays(count) {
+    const days = [];
+    const DAY_NAMES  = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const FULL_DAYS  = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const MONTHS     = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const FULL_MONTHS= ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    const cursor = new Date();
+    cursor.setDate(cursor.getDate() + 1);
+
+    while (days.length < count) {
+      const d = cursor.getDay();
+      if (d !== 0 && d !== 6) {
+        days.push({
+          dayName:  DAY_NAMES[d],
+          monthDay: `${MONTHS[cursor.getMonth()]} ${cursor.getDate()}`,
+          full:     `${FULL_DAYS[d]}, ${FULL_MONTHS[cursor.getMonth()]} ${cursor.getDate()}`
+        });
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return days;
+  }
+
+  /**
    * Render FAQ search results.
    * @param {Array} results – [{key, text}]
    * @param {Function} onSelect – callback(faqKey)
@@ -263,6 +351,7 @@ const UI = (() => {
     renderButtons,
     renderChecklist,
     renderLeadForm,
+    renderCalendarWidget,
     renderFAQResults,
     showRating,
     hideRating
