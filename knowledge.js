@@ -189,13 +189,12 @@ const knowledge = {
   wine: {
     message: "Wine is at the heart of everything we do! What interests you most?",
     options: [
-      { label: "Wine Tasting Experience" },
-      { label: "Corporate Wine Event" },
-      { label: "Sip Club Subscription" },
-      { label: "Wine Gifting" },
-      { label: "Just Learning More" }
+      { label: "Wine Tasting Experience", next: "wine_route" },
+      { label: "Corporate Wine Event",    next: "wine_corporate" },
+      { label: "Sip Club Subscription",  next: "sip_club" },
+      { label: "Wine Gifting",           next: "gifting" },
+      { label: "Just Learning More",     next: "faq_wine" }
     ],
-    next: "wine_route",
     tag: "Sales_SipClub"
   },
 
@@ -279,9 +278,11 @@ const knowledge = {
   pricing_info: {
     message: "Our pricing is based on your event scope, goals, guest count, and customization level. We work within a range of budgets.\n\n💡 Typical starting ranges:\n• Private tastings: from $500\n• Team experiences: from $1,200\n• Full events: from $3,000+\n• Gifting programs: from $50/person\n\nThese are ballpark figures — we always provide a detailed custom quote.",
     options: [
-      { label: "Request a custom quote", next: "lead_capture" },
-      { label: "Talk to our team",       next: "human" },
-      { label: "Ask another question",   next: "mainMenu" }
+      { label: "Request a custom quote",   next: "lead_capture" },
+      { label: "How does booking work?",   next: "booking_stage" },
+      { label: "Logistics & policies",     next: "logistics" },
+      { label: "Talk to our team",         next: "human" },
+      { label: "Ask another question",     next: "mainMenu" }
     ],
     tag: "Support_Pricing"
   },
@@ -329,7 +330,7 @@ const knowledge = {
     options: [
       { label: "📧 Have someone email me",    next: "lead_capture" },
       { label: "📞 Request a call back",       next: "lead_capture_phone" },
-      { label: "📅 Book a consultation",       next: "lead_capture" },
+      { label: "📅 Book a consultation",       next: "consultation_booking" },
       { label: "Not right now",                next: "mainMenu" }
     ],
     tag: "Support_General"
@@ -353,8 +354,52 @@ const knowledge = {
   },
 
   /* -------------------------------------------------------
-     FAQ HUB
+     CONSULTATION BOOKING (Calendar Widget)
      ------------------------------------------------------- */
+  consultation_booking: {
+    message: "Let's find a time to chat! Pick a date and time that works for you:",
+    calendar: true,
+    tag: "Lead_Capture"
+  },
+
+  /* -------------------------------------------------------
+     LOGISTICS & POLICIES
+     ------------------------------------------------------- */
+  logistics: {
+    message: "We can help with insurance, accessibility, confidentiality, and approvals. What would you like to know?",
+    options: [
+      { label: "Do you carry insurance?",          next: "faq_l1" },
+      { label: "Accessibility accommodations?",     next: "faq_l2" },
+      { label: "Handle confidential events?",       next: "faq_l3" },
+      { label: "Work with internal approvals?",     next: "faq_l4" },
+      { label: "Request details",                   next: "lead_capture" },
+      { label: "Talk to a human",                   next: "human" }
+    ],
+    tag: "Support_Logistics"
+  },
+
+  faq_l1: {
+    message: "Yes — SommEvents carries full general liability insurance for all events we coordinate. If your venue requires a certificate of insurance (COI), we can provide one. We're happy to meet any insurance requirements your organization has.",
+    options: [{ label: "More questions", next: "logistics" }, { label: "Get details", next: "lead_capture" }, { label: "Back to menu", next: "mainMenu" }],
+    tag: "Support_Logistics"
+  },
+  faq_l2: {
+    message: "Absolutely. Accessibility is core to our planning process. We assess venues for wheelchair access, arrange dietary accommodations, and tailor experiences so everyone can fully participate — regardless of ability or dietary needs.",
+    options: [{ label: "More questions", next: "logistics" }, { label: "Get details", next: "lead_capture" }, { label: "Back to menu", next: "mainMenu" }],
+    tag: "Support_Logistics"
+  },
+  faq_l3: {
+    message: "Yes. We understand that many corporate events require discretion. We operate under strict confidentiality and are happy to sign NDAs. Guest lists, event details, and organizational information stay completely private.",
+    options: [{ label: "More questions", next: "logistics" }, { label: "Get details", next: "lead_capture" }, { label: "Back to menu", next: "mainMenu" }],
+    tag: "Support_Logistics"
+  },
+  faq_l4: {
+    message: "We work with internal procurement and approval processes all the time. We provide formal proposals, itemized quotes, vendor information, and any documentation your team needs to get sign-off. We're comfortable with PO processes and corporate invoicing.",
+    options: [{ label: "More questions", next: "logistics" }, { label: "Get details", next: "lead_capture" }, { label: "Back to menu", next: "mainMenu" }],
+    tag: "Support_Logistics"
+  },
+
+
   faq_main: {
     message: "What topic would you like to explore?",
     options: [
