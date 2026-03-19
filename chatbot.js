@@ -22,7 +22,7 @@
   /* ---- State ---- */
   let currentNodeKey = "mainMenu";
   let conversationHistory = [];
-  let nodeHistory = [];
+  let nodeHistory = []; // stack of { nodeKey, historyLength } (history length after rendering that node)
   let selectedDateTime = null;  // stores calendar widget selection
   const TYPING_DELAY = 500;  // ms typing indicator
   const URGENCY_KEYWORDS = ["urgent", "asap", "immediately", "rush", "last minute", "tomorrow", "next week"];
@@ -42,14 +42,34 @@
 
   function updateBackButton() {
     if (!backBtn) return;
-    backBtn.disabled = nodeHistory.length === 0;
+    backBtn.disabled = nodeHistory.length <= 1;
+  }
+
+  function trimToHistoryLength(length) {
+    while (conversationHistory.length > length) {
+      conversationHistory.pop();
+      if (UI.messagesEl.lastElementChild) UI.messagesEl.removeChild(UI.messagesEl.lastElementChild);
+    }
+    saveHistory();
   }
 
   function goBack() {
-    if (nodeHistory.length === 0) return;
-    const previous = nodeHistory.pop();
-    renderNode(previous, { skipHistory: true });
+    if (nodeHistory.length <= 1) return;
+
+    // Drop current node state
+    nodeHistory.pop();
+    const prev = nodeHistory[nodeHistory.length - 1];
+
+    // Restore messages to the state for the previous node
+    trimToHistoryLength(prev.historyLength);
+
+    currentNodeKey = prev.nodeKey;
     updateBackButton();
+
+    // Rebuild actions for the previous node (does not re-send bot message)
+    UI.clearActions();
+    const node = knowledge[currentNodeKey];
+    if (node) renderNodeActions(node, currentNodeKey);
   }
 
   /* ===============================
@@ -103,24 +123,23 @@
     conversationHistory.forEach(entry => {
       UI.addMessage(entry.text, entry.who);
     });
-    // Re-render the last node's actions
+    // Ensure back button state is correct and actions are rendered
     const node = knowledge[currentNodeKey];
     if (node) {
       renderNodeActions(node, currentNodeKey);
     }
+    nodeHistory = [{ nodeKey: currentNodeKey, historyLength: conversationHistory.length }];
+    updateBackButton();
   }
 
   /* ===============================
      CORE RENDER
      =============================== */
   function renderNode(nodeKey, { skipHistory = false } = {}) {
-    if (!skipHistory && currentNodeKey && currentNodeKey !== nodeKey) {
-      nodeHistory.push(currentNodeKey);
-    }
+    const node = knowledge[nodeKey];
+
     currentNodeKey = nodeKey;
     updateBackButton();
-
-    const node = knowledge[nodeKey];
 
     UI.clearActions();
 
@@ -139,6 +158,15 @@
       UI.hideTyping();
       addBotMessage(node.message);
       renderNodeActions(node, nodeKey);
+
+      if (!skipHistory) {
+        // Record stack state after rendering this node (avoid duplicates)
+        const last = nodeHistory[nodeHistory.length - 1];
+        if (!last || last.nodeKey !== nodeKey) {
+          nodeHistory.push({ nodeKey, historyLength: conversationHistory.length });
+        }
+        updateBackButton();
+      }
     }, TYPING_DELAY);
   }
 
