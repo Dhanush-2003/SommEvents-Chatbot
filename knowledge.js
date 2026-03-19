@@ -276,7 +276,7 @@ const knowledge = {
   },
 
   pricing_info: {
-    message: "Our pricing is based on your event scope, goals, guest count, and customization level. We work within a range of budgets.\n\n💡 Typical starting ranges:\n• Private tastings: from $500\n• Team experiences: from $1,200\n• Full events: from $3,000+\n• Gifting programs: from $50/person\n\nThese are ballpark figures — we always provide a detailed custom quote.",
+    message: "Our pricing is customized based on your event scope, goals, guest count, location, and customization level.\n\nBecause every experience is different, we don’t list fixed prices in-chat. If you share a few details (date/timeframe, group size, city, and what you’re aiming for), we’ll put together a clear custom quote — and we’ll work within your budget wherever possible.",
     options: [
       { label: "Request a custom quote",   next: "lead_capture" },
       { label: "How does booking work?",   next: "booking_stage" },
@@ -349,7 +349,7 @@ const knowledge = {
   lead_capture_phone: {
     message: "We'd love to chat! Please share your info and preferred call time.",
     form: true,
-    formFields: ["name", "email", "phone"],
+    formFields: ["name", "email", "phone", "company"],
     tag: "Lead_Capture"
   },
 
@@ -675,7 +675,7 @@ const knowledge = {
     tag: "Support_FAQ"
   },
   faq_sc5: {
-    message: "Sip Club pricing varies based on your plan:\n\n• Monthly: starting from $75–$150/month\n• Quarterly: starting from $200–$400/quarter\n\nPricing depends on the number of bottles and your wine preferences. We also offer corporate bulk rates for employee programs.",
+    message: "Sip Club pricing depends on factors like your plan (monthly vs. quarterly), number of bottles, wine style preferences, and delivery details.\n\nFor the most accurate info, share what you’re looking for and we’ll recommend an option that fits — including corporate/employee program pricing if that applies.",
     options: [{ label: "More questions", next: "faq_sip_club" }, { label: "Join Sip Club", next: "lead_capture" }, { label: "Back to menu", next: "mainMenu" }],
     tag: "Support_FAQ"
   },
