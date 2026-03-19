@@ -125,6 +125,33 @@ const Analytics = (() => {
     } catch (e) { /* silent */ }
   }
 
+  /* ---- Drop-off tracking ---- */
+  const DROPOFF_KEY = "somm_dropoffs";
+
+  function trackDropoff(currentNodeKey, context = {}) {
+    const dropoff = {
+      sessionId: session.id,
+      droppedAtNode: currentNodeKey,
+      droppedAt: Date.now(),
+      messageCount: session.messageCount,
+      conversationLength: Math.round((Date.now() - session.startedAt) / 1000),
+      pathTaken: [...session.path],
+      tags: [...session.tags],
+      leadCaptured: session.leadCaptured,
+      context: context // e.g., { reason: "user_closed", ... }
+    };
+
+    try {
+      const dropoffs = JSON.parse(localStorage.getItem(DROPOFF_KEY) || "[]");
+      dropoffs.push(dropoff);
+      // Keep last 100 drop-offs
+      if (dropoffs.length > 100) dropoffs.shift();
+      localStorage.setItem(DROPOFF_KEY, JSON.stringify(dropoffs));
+    } catch (e) { /* silent */ }
+
+    log("DROPOFF", { node: currentNodeKey, context });
+  }
+
   /* ---- Session reset ---- */
   function resetSession() {
     session = {
@@ -157,6 +184,9 @@ const Analytics = (() => {
   function getHistory() {
     try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { return []; }
   }
+  function getDropoffs() {
+    try { return JSON.parse(localStorage.getItem(DROPOFF_KEY) || "[]"); } catch { return []; }
+  }
 
   /* ---- Init ---- */
   loadSession();
@@ -168,10 +198,12 @@ const Analytics = (() => {
     trackLead,
     trackRating,
     trackMessage,
+    trackDropoff,
     onEscalation,
     resetSession,
     getSession,
     getHistory,
+    getDropoffs,
     log
   };
 })();

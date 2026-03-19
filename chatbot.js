@@ -11,6 +11,7 @@
   const panel    = UI.$("chat-panel");
   const closeBtn = UI.$("chat-close");
   const resetBtn = UI.$("chat-reset");
+  const backBtn  = UI.$("chat-back");
   const inputEl  = UI.$("chat-input");
   const sendBtn  = UI.$("chat-send");
   const faqSearch       = UI.$("faq-search");
@@ -21,6 +22,7 @@
   /* ---- State ---- */
   let currentNodeKey = "mainMenu";
   let conversationHistory = [];
+  let nodeHistory = [];
   let selectedDateTime = null;  // stores calendar widget selection
   const TYPING_DELAY = 500;  // ms typing indicator
   const URGENCY_KEYWORDS = ["urgent", "asap", "immediately", "rush", "last minute", "tomorrow", "next week"];
@@ -36,6 +38,18 @@
       const h = sessionStorage.getItem("somm_history");
       if (h) conversationHistory = JSON.parse(h);
     } catch (e) { /* silent */ }
+  }
+
+  function updateBackButton() {
+    if (!backBtn) return;
+    backBtn.disabled = nodeHistory.length === 0;
+  }
+
+  function goBack() {
+    if (nodeHistory.length === 0) return;
+    const previous = nodeHistory.pop();
+    renderNode(previous, { skipHistory: true });
+    updateBackButton();
   }
 
   /* ===============================
@@ -55,10 +69,14 @@
         renderNode("mainMenu");
       }
     }
+    updateBackButton();
     inputEl.focus();
   }
 
   function closeChat() {
+    // Track drop-off point before closing
+    Analytics.trackDropoff(currentNodeKey, { reason: "user_closed" });
+    
     panel.classList.add("closing");
     setTimeout(() => {
       panel.classList.add("hidden");
@@ -72,9 +90,11 @@
     UI.clearActions();
     UI.hideRating();
     conversationHistory = [];
+    nodeHistory = [];
     saveHistory();
     Analytics.resetSession();
     currentNodeKey = "mainMenu";
+    updateBackButton();
     renderNode("mainMenu");
   }
 
@@ -93,8 +113,13 @@
   /* ===============================
      CORE RENDER
      =============================== */
-  function renderNode(nodeKey) {
+  function renderNode(nodeKey, { skipHistory = false } = {}) {
+    if (!skipHistory && currentNodeKey && currentNodeKey !== nodeKey) {
+      nodeHistory.push(currentNodeKey);
+    }
     currentNodeKey = nodeKey;
+    updateBackButton();
+
     const node = knowledge[nodeKey];
 
     UI.clearActions();
@@ -580,12 +605,18 @@
      =============================== */
   Analytics.onEscalation((reason) => {
     if (reason === "repeated_pricing") {
+      // Track drop-off to escalation
+      Analytics.trackDropoff(currentNodeKey, { reason: "escalation_pricing_loop" });
+      
       addBotMessage("It looks like you have a lot of pricing questions — totally understandable. Would you like to speak with someone from our team for a detailed quote?");
       UI.renderButtons(
         [{ label: "Yes, connect me", next: "human" }, { label: "Not yet", next: "mainMenu" }],
         (opt) => { addUserMessage(opt.label); renderNode(opt.next); }
       );
     } else if (reason === "faq_loop_no_conversion") {
+      // Track drop-off to escalation
+      Analytics.trackDropoff(currentNodeKey, { reason: "escalation_faq_loop" });
+      
       addBotMessage("You've been exploring a lot of great questions! Would it help to chat with someone from our team directly?");
       UI.renderButtons(
         [{ label: "Yes, please!", next: "human" }, { label: "I'm okay", next: "mainMenu" }],
@@ -600,6 +631,7 @@
   bubble.addEventListener("click", openChat);
   closeBtn.addEventListener("click", closeChat);
   resetBtn.addEventListener("click", resetChat);
+  if (backBtn) backBtn.addEventListener("click", goBack);
 
   sendBtn.addEventListener("click", handleTypedInput);
   inputEl.addEventListener("keydown", (e) => {
