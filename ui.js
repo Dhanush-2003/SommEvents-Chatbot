@@ -47,7 +47,22 @@ const UI = (() => {
   }
 
   function scrollToBottom() {
-    messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: "smooth" });
+    if (!messagesEl) return;
+
+    const doScroll = () => {
+      // Setting scrollTop is the most reliable cross-browser approach.
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      try {
+        messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: "auto" });
+      } catch (e) {
+        /* ignore */
+      }
+    };
+
+    // Run now + after layout settles (buttons/messages can change height).
+    doScroll();
+    requestAnimationFrame(doScroll);
+    setTimeout(doScroll, 50);
   }
 
   /* ---- Actions area ---- */
@@ -142,7 +157,8 @@ const UI = (() => {
     const fieldConfig = {
       name:  { placeholder: "Your name",       type: "text",  autocomplete: "name" },
       email: { placeholder: "Email address",    type: "email", autocomplete: "email" },
-      phone: { placeholder: "Phone (optional)", type: "tel",   autocomplete: "tel" }
+      phone: { placeholder: "Phone (optional)", type: "tel",   autocomplete: "tel" },
+      company: { placeholder: "Company name (optional)", type: "text", autocomplete: "organization" }
     };
 
     fieldNames.forEach(key => {
@@ -183,6 +199,12 @@ const UI = (() => {
       }
       // Phone (optional)
       if (inputs.phone) { data.phone = inputs.phone.value.trim(); }
+
+      // Company (optional)
+      if (inputs.company) {
+        const v = inputs.company.value.trim();
+        if (v) data.company = v;
+      }
 
       onSubmit(data);
     };
