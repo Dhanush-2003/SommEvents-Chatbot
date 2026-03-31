@@ -33,13 +33,22 @@ const UI = (() => {
   }
 
   /* ---- Messages ---- */
-  function addMessage(text, who = "bot") {
+  function addMessage(text, who = "bot", options = {}) {
     const div = document.createElement("div");
     div.className = `msg ${who}`;
     div.setAttribute("role", "log");
 
-    // Support newlines in knowledge base text
-    div.textContent = text;
+    if (options.image) {
+      const img = document.createElement("img");
+      img.src = options.image;
+      img.alt = options.imageAlt || "";
+      img.loading = "lazy";
+      div.appendChild(img);
+    }
+
+    const span = document.createElement("span");
+    span.textContent = text;
+    div.appendChild(span);
 
     messagesEl.appendChild(div);
     scrollToBottom();

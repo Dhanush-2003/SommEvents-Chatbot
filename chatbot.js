@@ -156,7 +156,7 @@
     UI.showTyping();
     setTimeout(() => {
       UI.hideTyping();
-      addBotMessage(node.message);
+      addBotMessage(node.message, { image: node.image, imageAlt: node.imageAlt });
       renderNodeActions(node, nodeKey);
 
       if (!skipHistory) {
@@ -267,8 +267,8 @@
   /* ===============================
      MESSAGE HELPERS
      =============================== */
-  function addBotMessage(text) {
-    UI.addMessage(text, "bot");
+  function addBotMessage(text, options = {}) {
+    UI.addMessage(text, "bot", options);
     recordMessage(text, "bot");
     Analytics.trackMessage("bot");
   }
