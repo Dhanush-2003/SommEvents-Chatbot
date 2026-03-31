@@ -58,9 +58,9 @@ const knowledge = {
   event_cta: {
     message: "Thanks for sharing! We can absolutely support this. What would you like to do next?",
     options: [
-      { label: "Request a proposal",   next: "lead_capture" },
-      { label: "Book a consultation",  next: "lead_capture" },
-      { label: "Ask another question", next: "mainMenu" }
+      { label: "Request a proposal",        next: "lead_capture" },
+      { label: "📅 Book a consultation",     next: "consultation_booking" },
+      { label: "Ask another question",       next: "mainMenu" }
     ],
     tag: "Sales_Event"
   },
@@ -303,7 +303,7 @@ const knowledge = {
     message: "Got it! Let's move things forward.",
     options: [
       { label: "Request detailed pricing",  next: "lead_capture" },
-      { label: "Book a consultation",        next: "lead_capture" },
+      { label: "📅 Book a consultation",     next: "consultation_booking" },
       { label: "Talk to a human",            next: "human" }
     ],
     tag: "Support_Pricing"
@@ -354,11 +354,11 @@ const knowledge = {
   },
 
   /* -------------------------------------------------------
-     CONSULTATION BOOKING (Calendar Widget)
+     CONSULTATION BOOKING (Calendly)
      ------------------------------------------------------- */
   consultation_booking: {
-    message: "Let's find a time to chat! Pick a date and time that works for you:",
-    calendar: true,
+    message: "Let's find a time to chat! You can book a consultation directly on our calendar — pick whatever time works best for you:",
+    calendly: "https://calendly.com/marte",
     tag: "Lead_Capture"
   },
 

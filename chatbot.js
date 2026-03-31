@@ -23,7 +23,6 @@
   let currentNodeKey = "mainMenu";
   let conversationHistory = [];
   let nodeHistory = []; // stack of { nodeKey, historyLength } (history length after rendering that node)
-  let selectedDateTime = null;  // stores calendar widget selection
   const TYPING_DELAY = 500;  // ms typing indicator
   const URGENCY_KEYWORDS = ["urgent", "asap", "immediately", "rush", "last minute", "tomorrow", "next week"];
   const HUMAN_KEYWORDS = ["talk", "human", "person", "someone", "agent", "call", "speak", "representative"];
@@ -183,13 +182,23 @@
       return;
     }
 
-    // Calendar widget
-    if (node.calendar) {
-      UI.renderCalendarWidget((dateTime) => {
-        selectedDateTime = dateTime;
-        addUserMessage(`Preferred time: ${dateTime}`);
-        addBotMessage(`${dateTime} is noted! 📅 Let's get your contact details to confirm the consultation:`);
-        renderNodeActions(knowledge["lead_capture_phone"], "lead_capture_phone");
+    // Calendly booking link
+    if (node.calendly) {
+      UI.renderCalendlyPrompt(node.calendly, () => {
+        addBotMessage("Your booking page is open in a new tab. Once you've picked a time, you're all set! Is there anything else I can help with?");
+        UI.renderButtons(
+          [{ label: "Back to main menu", next: "mainMenu" }, { label: "I'm all set!", next: "_end" }],
+          (opt) => {
+            addUserMessage(opt.label);
+            if (opt.next === "_end") {
+              endConversation();
+            } else {
+              renderNode(opt.next);
+            }
+          }
+        );
+      }, () => {
+        renderNode("lead_capture_phone");
       });
       return;
     }
@@ -204,18 +213,9 @@
           : `${data.name} — ${data.email}`;
         addUserMessage(summary);
 
-        // Attach selected consultation time if present
-        const leadData = selectedDateTime
-          ? { ...data, consultationTime: selectedDateTime }
-          : data;
-        selectedDateTime = null;
+        Analytics.trackLead(data);
 
-        // Track lead
-        Analytics.trackLead(leadData);
-
-        const confirmMsg = leadData.consultationTime
-          ? `✅ Thanks, ${data.name}! Your consultation request for "${leadData.consultationTime}" is received. We'll confirm shortly.`
-          : "✅ Thanks! Our team will follow up within 24 hours. Is there anything else I can help with?";
+        const confirmMsg = "✅ Thanks! Our team will follow up within 24 hours. Is there anything else I can help with?";
 
         addBotMessage(confirmMsg);
         UI.renderButtons(
@@ -524,8 +524,8 @@
       return;
     }
     if (lower.includes("book") || lower.includes("reserve") || lower.includes("schedule") || lower.includes("appointment") || lower.includes("availability")) {
-      addBotMessage("Let's get you booked in! Here's how our process works.");
-      renderNode("booking_stage");
+      addBotMessage("Let's get you booked in!");
+      renderNode("consultation_booking");
       return;
     }
     if (lower.includes("faq") || lower.includes("question") || lower.includes("help") || lower.includes("info") || lower.includes("information")) {

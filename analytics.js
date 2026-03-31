@@ -4,6 +4,11 @@
    ========================================================= */
 
 const Analytics = (() => {
+  // Initialize Supabase client (remote project)
+  const supabaseUrl = 'https://sxaisrcdheafiqerqwyu.supabase.co';
+  const supabaseKey = 'sb_publishable_CGGrMdFyYFKYukpHoxXNhg_NCU7Q92j';
+  const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+
   const SESSION_KEY = "somm_session";
   const HISTORY_KEY = "somm_analytics";
 
@@ -72,6 +77,20 @@ const Analytics = (() => {
     session.leadCaptured = true;
     session.leadData = { ...data, capturedAt: Date.now() };
     save();
+
+    // Send to Supabase
+    if (supabase) {
+      supabase.from('leads').insert([{
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        consultation_time: data.consultationTime,
+        captured_at: new Date(data.capturedAt || Date.now()).toISOString()
+      }]).then(({ error }) => {
+        if (error) log('SUPABASE_ERROR', error);
+      });
+    }
+
     log("LEAD_CAPTURED", data);
   }
 
@@ -79,6 +98,28 @@ const Analytics = (() => {
     session.rating = value;
     session.conversationLength = Math.round((Date.now() - session.startedAt) / 1000);
     save();
+
+    // Archive session to Supabase
+    if (supabase) {
+      supabase.from('sessions').insert([{
+        id: session.id,
+        started_at: new Date(session.startedAt).toISOString(),
+        path: session.path,
+        tags: session.tags,
+        faq_searches: session.faqSearches,
+        pricing_asks: session.pricingAsks,
+        handoff_triggered: session.handoffTriggered,
+        handoff_reason: session.handoffReason,
+        lead_captured: session.leadCaptured,
+        lead_data: session.leadData,
+        rating: session.rating,
+        message_count: session.messageCount,
+        conversation_length: session.conversationLength
+      }]).then(({ error }) => {
+        if (error) log('SUPABASE_ERROR', error);
+      });
+    }
+
     log("RATING", value);
     archiveSession();
   }
@@ -135,19 +176,36 @@ const Analytics = (() => {
       droppedAt: Date.now(),
       messageCount: session.messageCount,
       conversationLength: Math.round((Date.now() - session.startedAt) / 1000),
-      pathTaken: [...session.path],
-      tags: [...session.tags],
+      pathTaken: session.path,
+      tags: session.tags,
       leadCaptured: session.leadCaptured,
-      context: context // e.g., { reason: "user_closed", ... }
+      context: context
     };
 
+    // Store locally (fallback)
     try {
       const dropoffs = JSON.parse(localStorage.getItem(DROPOFF_KEY) || "[]");
       dropoffs.push(dropoff);
-      // Keep last 100 drop-offs
       if (dropoffs.length > 100) dropoffs.shift();
       localStorage.setItem(DROPOFF_KEY, JSON.stringify(dropoffs));
     } catch (e) { /* silent */ }
+
+    // Send to Supabase
+    if (supabase) {
+      supabase.from('dropoffs').insert([{
+        session_id: dropoff.sessionId,
+        dropped_at_node: dropoff.droppedAtNode,
+        dropped_at: new Date(dropoff.droppedAt).toISOString(),
+        message_count: dropoff.messageCount,
+        conversation_length: dropoff.conversationLength,
+        path_taken: dropoff.pathTaken,
+        tags: dropoff.tags,
+        lead_captured: dropoff.leadCaptured,
+        context: dropoff.context
+      }]).then(({ error }) => {
+        if (error) log('SUPABASE_ERROR', error);
+      });
+    }
 
     log("DROPOFF", { node: currentNodeKey, context });
   }
