@@ -19,6 +19,18 @@ const knowledge = {
     ]
   },
 
+  mainMenu_return: {
+    message: "Welcome back! 😊 Great to see you again. What can I help with today?",
+    options: [
+      { label: "🎉 Plan an Event",               next: "plan_event",    tag: "Sales_Event" },
+      { label: "🤝 Team Building & Experiences",  next: "team_building", tag: "Sales_Event" },
+      { label: "🎁 Corporate & Custom Gifting",   next: "gifting",       tag: "Sales_Gifting" },
+      { label: "🍷 Wine Experiences & Sip Club",  next: "wine",          tag: "Sales_SipClub" },
+      { label: "💰 Pricing, Booking & Logistics", next: "pricing",       tag: "Support_Pricing" },
+      { label: "💬 Talk to a Human",              next: "human",         tag: "Support_General" }
+    ]
+  },
+
   /* -------------------------------------------------------
      1. PLAN AN EVENT
      ------------------------------------------------------- */

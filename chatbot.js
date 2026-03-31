@@ -86,7 +86,9 @@
       if (conversationHistory.length > 0) {
         replayHistory();
       } else {
-        renderNode("mainMenu");
+        const isReturning = localStorage.getItem("somm_visited");
+        renderNode(isReturning ? "mainMenu_return" : "mainMenu");
+        localStorage.setItem("somm_visited", "1");
       }
     }
     updateBackButton();
