@@ -360,6 +360,7 @@ const knowledge = {
       { label: "📧 Have someone email me",    next: "lead_capture" },
       { label: "📞 Request a call back",       next: "lead_capture_phone" },
       { label: "📅 Book a consultation",       next: "consultation_booking" },
+      { label: "💬 Chat on WhatsApp",          next: "_whatsapp" },
       { label: "Not right now",                next: "mainMenu" }
     ],
     tag: "Support_General"

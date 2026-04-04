@@ -359,6 +359,16 @@
           return;
         }
 
+        if (opt.next === "_whatsapp") {
+          window.open("https://wa.me/14164643575", "_blank", "noopener");
+          addBotMessage("WhatsApp is open in a new tab! Our team will reply shortly. Is there anything else I can help with?");
+          UI.renderButtons(
+            [{ label: "Back to main menu", next: "mainMenu" }, { label: "I'm all set!", next: "_end" }],
+            (o) => { addUserMessage(o.label); o.next === "_end" ? endConversation() : renderNode(o.next); }
+          );
+          return;
+        }
+
         // Option-level `next` takes priority over node-level `next`
         if (opt.next) renderNode(opt.next);
         else if (node.next) renderNode(node.next);
