@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SommEvents — Analytics Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <!-- Auth gate -->
+  <div id="auth-gate">
+    <div class="auth-card">
+      <h1>SommEvents Analytics</h1>
+      <p>Enter your Supabase <strong>service_role</strong> key to access the dashboard.</p>
+      <input id="auth-key" type="password" placeholder="service_role key" autocomplete="off" />
+      <button id="auth-submit">Access Dashboard</button>
+      <p class="auth-hint">Find this in Supabase &gt; Settings &gt; API &gt; service_role</p>
+    </div>
+  </div>
+
+  <!-- Dashboard (hidden until authenticated) -->
+  <div id="dashboard" class="hidden">
+    <header>
+      <div>
+        <h1>SommEvents Analytics</h1>
+        <p class="subtitle" id="date-range"></p>
+      </div>
+      <div class="header-actions">
+        <select id="period-select">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="0">All time</option>
+        </select>
+        <button id="refresh-btn">Refresh</button>
+      </div>
+    </header>
+
+    <!-- KPI cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Sessions</span>
+        <span class="kpi-value" id="kpi-sessions">—</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Leads Captured</span>
+        <span class="kpi-value" id="kpi-leads">—</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Conversion Rate</span>
+        <span class="kpi-value" id="kpi-conversion">—</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Avg Rating</span>
+        <span class="kpi-value" id="kpi-rating">—</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Drop-offs</span>
+        <span class="kpi-value" id="kpi-dropoffs">—</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Avg Messages / Session</span>
+        <span class="kpi-value" id="kpi-avg-messages">—</span>
+      </div>
+    </section>
+
+    <!-- Charts row -->
+    <section class="charts-row">
+      <div class="chart-card wide">
+        <h3>Leads Over Time</h3>
+        <canvas id="chart-leads"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Ratings Distribution</h3>
+        <canvas id="chart-ratings"></canvas>
+      </div>
+    </section>
+
+    <!-- Tables row -->
+    <section class="charts-row">
+      <div class="chart-card">
+        <h3>Top Drop-off Nodes</h3>
+        <table id="table-dropoffs">
+          <thead><tr><th>Node</th><th>Count</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="chart-card">
+        <h3>Popular Intent Tags</h3>
+        <table id="table-tags">
+          <thead><tr><th>Tag</th><th>Count</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="chart-card">
+        <h3>Recent Leads</h3>
+        <table id="table-leads">
+          <thead><tr><th>Name</th><th>Email</th><th>Date</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
