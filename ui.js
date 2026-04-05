@@ -72,6 +72,17 @@ const UI = (() => {
     // role="log" tells screen readers this region receives updates
     div.setAttribute("role", "log");
 
+    if (options.image) {
+      const img = document.createElement("img");
+      img.src = options.image;
+      img.alt = options.imageAlt || "";
+      img.loading = "lazy";
+      div.appendChild(img);
+    }
+
+    const span = document.createElement("span");
+    span.textContent = text;
+    div.appendChild(span);
     // Use textContent (not innerHTML) to prevent XSS from user-typed input
     div.textContent = text;
 

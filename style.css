@@ -270,6 +270,13 @@ html, body {
   border-bottom-right-radius: 4px;
 }
 
+.msg img {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  display: block;
+}
+
 .msg .timestamp {
   display: block;
   font-size: 10px;

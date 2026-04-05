@@ -246,7 +246,7 @@
     UI.showTyping();
     setTimeout(() => {
       UI.hideTyping();
-      addBotMessage(node.message);
+      addBotMessage(node.message, { image: node.image, imageAlt: node.imageAlt });
       renderNodeActions(node, nodeKey);
 
       if (!skipHistory) {

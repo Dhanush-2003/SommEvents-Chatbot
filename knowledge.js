@@ -145,6 +145,8 @@ const knowledge = {
 
   tb_examples: {
     message: "Here are some of our most popular experiences:\n\n🍷 Wine & Food Pairing — guided tastings with a certified sommelier\n🍳 Culinary Challenges — hands-on team cooking competitions\n🧠 Strategy & Innovation Workshops — creative problem-solving\n🎨 Art & Wine Nights — paint + sip for team bonding\n🌿 Outdoor Adventures — vineyard tours, scavenger hunts\n💻 Virtual Tastings — curated kits shipped to each participant\n\nWant to explore any of these further?",
+    image: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=600&q=80",
+    imageAlt: "Team building experience",
     options: [
       { label: "Request a quote",  next: "lead_capture" },
       { label: "Ask a question",   next: "faq_team_building" },
@@ -204,6 +206,8 @@ const knowledge = {
 
   gifting_options: {
     message: "Here's a taste of what we offer:\n\n🎁 Curated Gift Boxes — wine, artisanal foods, branded items\n🍷 Wine Collections — hand-picked selections by our sommeliers\n🧀 Charcuterie & Wine Sets — ready-to-enjoy pairings\n🌿 Wellness & Non-Alcoholic — teas, gourmet treats, self-care\n✨ Custom Branded — your logo, your style, our expertise\n📦 Bulk Programs — corporate gifting at scale with delivery logistics\n\nAll gifts can be customized and shipped anywhere in Canada.",
+    image: "https://images.unsplash.com/photo-1549465220-1a8b9238f862?w=600&q=80",
+    imageAlt: "Curated gift box with wine and artisanal items",
     options: [
       { label: "Start a gifting program",  next: "lead_capture" },
       { label: "Ask a question",           next: "faq_gifting" },
@@ -217,6 +221,8 @@ const knowledge = {
      ------------------------------------------------------- */
   wine: {
     message: "Wine is at the heart of everything we do! What interests you most?",
+    image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80",
+    imageAlt: "Wine tasting experience",
     options: [
       { label: "Wine Tasting Experience", next: "wine_route" },
       { label: "Corporate Wine Event",    next: "wine_corporate" },
