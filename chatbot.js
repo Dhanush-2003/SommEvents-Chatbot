@@ -1,12 +1,25 @@
 /* =========================================================
    SommEvents – Chatbot Logic (State Machine)
+   =========================================================
    Orchestrates conversation flow, routing, and escalation.
+
+   Architecture:
+   - Reads conversation nodes from knowledge.js
+   - Delegates all DOM rendering to ui.js
+   - Delegates all analytics/persistence to analytics.js
+   - Wrapped in an IIFE to avoid polluting the global scope
+
+   State model:
+   - `currentNodeKey`       – which knowledge.js node is active
+   - `nodeHistory`          – stack enabling the Back button
+   - `conversationHistory`  – full message log (bot + user)
    ========================================================= */
 
 (function () {
   "use strict";
 
   /* ---- Element refs ---- */
+  // Pulled via UI.$ so all element lookups go through the same cache
   const bubble   = UI.$("chat-bubble");
   const panel    = UI.$("chat-panel");
   const closeBtn = UI.$("chat-close");
@@ -21,18 +34,43 @@
 
   /* ---- State ---- */
   let currentNodeKey = "mainMenu";
+  /** @type {Array<{text: string, who: string, at: number}>} */
   let conversationHistory = [];
-  let nodeHistory = []; // stack of { nodeKey, historyLength } (history length after rendering that node)
-  let selectedDateTime = null;  // stores calendar widget selection
-  const TYPING_DELAY = 500;  // ms typing indicator
+  /**
+   * Navigation stack. Each entry records which node was rendered and
+   * how many messages were in conversationHistory at that point, so
+   * the Back button can restore the exact prior state.
+   * @type {Array<{nodeKey: string, historyLength: number}>}
+   */
+  let nodeHistory = [];
+
+  // Delay between showing the typing indicator and displaying the bot message
+  const TYPING_DELAY = 500; // ms
+
+  // ---- Intent keyword lists used by the free-text input handler ----
+
+  // Triggers immediate escalation to the human handoff node
   const URGENCY_KEYWORDS = ["urgent", "asap", "immediately", "rush", "last minute", "tomorrow", "next week"];
+  // Triggers routing to the human contact node
   const HUMAN_KEYWORDS = ["talk", "human", "person", "someone", "agent", "call", "speak", "representative"];
+  // Triggers an empathetic response + immediate escalation
   const FRUSTRATION_KEYWORDS = ["confused", "frustrat", "don't understand", "doesn't work", "not helpful", "terrible", "horrible", "waste", "stupid"];
 
-  /* ---- Conversation history (session) ---- */
+  /* ======================================================
+     CONVERSATION HISTORY (SESSION PERSISTENCE)
+     ====================================================== */
+
+  /**
+   * Persist the current message log to sessionStorage.
+   * Allows history to survive chat panel close/reopen within the same tab.
+   */
   function saveHistory() {
     try { sessionStorage.setItem("somm_history", JSON.stringify(conversationHistory)); } catch (e) { /* silent */ }
   }
+
+  /**
+   * Restore the message log from sessionStorage if it exists.
+   */
   function loadHistory() {
     try {
       const h = sessionStorage.getItem("somm_history");
@@ -40,19 +78,39 @@
     } catch (e) { /* silent */ }
   }
 
+  /* ======================================================
+     BACK BUTTON
+     ====================================================== */
+
+  /**
+   * Enable or disable the Back button based on navigation stack depth.
+   * The button is disabled when there is nothing to go back to (stack ≤ 1).
+   */
   function updateBackButton() {
     if (!backBtn) return;
     backBtn.disabled = nodeHistory.length <= 1;
   }
 
+  /**
+   * Remove messages from the DOM and conversationHistory that were added
+   * after a given history length, effectively undoing them visually.
+   *
+   * @param {number} length - Target conversationHistory.length to revert to
+   */
   function trimToHistoryLength(length) {
     while (conversationHistory.length > length) {
       conversationHistory.pop();
+      // Keep the DOM in sync: remove the last rendered message element
       if (UI.messagesEl.lastElementChild) UI.messagesEl.removeChild(UI.messagesEl.lastElementChild);
     }
     saveHistory();
   }
 
+  /**
+   * Navigate to the previous node in the history stack.
+   * Pops the current entry, restores the message thread to the prior snapshot,
+   * then re-renders the actions for the previous node without replaying its message.
+   */
   function goBack() {
     if (nodeHistory.length <= 1) return;
 
@@ -72,9 +130,13 @@
     if (node) renderNodeActions(node, currentNodeKey);
   }
 
-  /* ===============================
+  /* ======================================================
      OPEN / CLOSE
-     =============================== */
+     ====================================================== */
+
+  /**
+   * Open the chat panel, restore or start a conversation, and focus the input.
+   */
   function openChat() {
     panel.classList.remove("hidden");
     panel.classList.remove("closing");
@@ -93,11 +155,16 @@
     inputEl.focus();
   }
 
+  /**
+   * Close the chat panel with a CSS transition.
+   * Records a drop-off event so we can analyse which nodes users leave from.
+   */
   function closeChat() {
     // Track drop-off point before closing
     Analytics.trackDropoff(currentNodeKey, { reason: "user_closed" });
-    
+
     panel.classList.add("closing");
+    // Wait for the CSS transition to finish before hiding the element
     setTimeout(() => {
       panel.classList.add("hidden");
       panel.classList.remove("closing");
@@ -105,6 +172,10 @@
     }, 200);
   }
 
+  /**
+   * Reset the conversation to a blank state and return to the main menu.
+   * Clears the DOM, clears sessionStorage, and resets the analytics session.
+   */
   function resetChat() {
     UI.messagesEl.innerHTML = "";
     UI.clearActions();
@@ -118,7 +189,15 @@
     renderNode("mainMenu");
   }
 
-  /* ---- Replay session history ---- */
+  /* ======================================================
+     SESSION HISTORY REPLAY
+     ====================================================== */
+
+  /**
+   * Re-render all previously recorded messages into the DOM after
+   * the chat panel is reopened (without triggering analytics again).
+   * Also rebuilds the actions area for the current node.
+   */
   function replayHistory() {
     conversationHistory.forEach(entry => {
       UI.addMessage(entry.text, entry.who);
@@ -128,13 +207,23 @@
     if (node) {
       renderNodeActions(node, currentNodeKey);
     }
+    // Seed the navigation stack with a single entry so Back is initially disabled
     nodeHistory = [{ nodeKey: currentNodeKey, historyLength: conversationHistory.length }];
     updateBackButton();
   }
 
-  /* ===============================
+  /* ======================================================
      CORE RENDER
-     =============================== */
+     ====================================================== */
+
+  /**
+   * Navigate to a knowledge.js node: show typing, display the bot message,
+   * then render the appropriate action controls.
+   *
+   * @param {string} nodeKey            - Key in the `knowledge` object to render
+   * @param {{ skipHistory?: boolean }} [opts]
+   *   skipHistory: true suppresses pushing to nodeHistory (used by goBack)
+   */
   function renderNode(nodeKey, { skipHistory = false } = {}) {
     const node = knowledge[nodeKey];
 
@@ -144,6 +233,7 @@
     UI.clearActions();
 
     if (!node) {
+      // Unknown node key — gracefully fall back rather than breaking the flow
       addBotMessage("I want to make sure I help you properly. Let me take you back to the main menu.");
       renderNode("mainMenu");
       return;
@@ -152,7 +242,7 @@
     // Track in analytics
     Analytics.trackNode(nodeKey, node.tag);
 
-    // Show typing then message
+    // Show typing indicator, then reveal the message after TYPING_DELAY
     UI.showTyping();
     setTimeout(() => {
       UI.hideTyping();
@@ -160,7 +250,7 @@
       renderNodeActions(node, nodeKey);
 
       if (!skipHistory) {
-        // Record stack state after rendering this node (avoid duplicates)
+        // Push to navigation stack — deduplicate consecutive identical keys
         const last = nodeHistory[nodeHistory.length - 1];
         if (!last || last.nodeKey !== nodeKey) {
           nodeHistory.push({ nodeKey, historyLength: conversationHistory.length });
@@ -170,8 +260,22 @@
     }, TYPING_DELAY);
   }
 
+  /**
+   * Render the interactive controls (buttons, form, Calendly prompt, checklist)
+   * appropriate for the given node. Called after the bot message is shown.
+   *
+   * Priority order for node types:
+   *   1. capture + fields → checklist
+   *   2. calendly         → Calendly booking prompt
+   *   3. form             → lead-capture form
+   *   4. options          → quick-reply buttons
+   *   5. fallback         → single "Back to menu" button
+   *
+   * @param {Object} node    - The knowledge node object
+   * @param {string} nodeKey - The node's key (used for analytics / routing)
+   */
   function renderNodeActions(node, nodeKey) {
-    // Checklist capture
+    // 1. Checklist (optional multi-select detail gathering)
     if (node.capture && node.fields && node.next) {
       UI.addMessage("Select any that you already know:", "bot");
       recordMessage("Select any that you already know:", "bot");
@@ -183,39 +287,42 @@
       return;
     }
 
-    // Calendar widget
-    if (node.calendar) {
-      UI.renderCalendarWidget((dateTime) => {
-        selectedDateTime = dateTime;
-        addUserMessage(`Preferred time: ${dateTime}`);
-        addBotMessage(`${dateTime} is noted! 📅 Let's get your contact details to confirm the consultation:`);
-        renderNodeActions(knowledge["lead_capture_phone"], "lead_capture_phone");
+    // 2. Calendly booking prompt
+    if (node.calendly) {
+      UI.renderCalendlyPrompt(node.calendly, () => {
+        addBotMessage("Your booking page is open in a new tab. Once you've picked a time, you're all set! Is there anything else I can help with?");
+        UI.renderButtons(
+          [{ label: "Back to main menu", next: "mainMenu" }, { label: "I'm all set!", next: "_end" }],
+          (opt) => {
+            addUserMessage(opt.label);
+            if (opt.next === "_end") {
+              endConversation();
+            } else {
+              renderNode(opt.next);
+            }
+          }
+        );
+      }, () => {
+        // Fallback: route to the phone-optional lead capture form
+        renderNode("lead_capture_phone");
       });
       return;
     }
 
-    // Lead form
+    // 3. Lead capture form
     if (node.form) {
       const fields = node.formFields || ["name", "email"];
       UI.renderLeadForm(fields, (data) => {
         UI.clearActions();
+        // Build a human-readable summary to echo back as the user "message"
         const summary = data.phone
           ? `${data.name} — ${data.email} — ${data.phone}`
           : `${data.name} — ${data.email}`;
         addUserMessage(summary);
 
-        // Attach selected consultation time if present
-        const leadData = selectedDateTime
-          ? { ...data, consultationTime: selectedDateTime }
-          : data;
-        selectedDateTime = null;
+        Analytics.trackLead(data);
 
-        // Track lead
-        Analytics.trackLead(leadData);
-
-        const confirmMsg = leadData.consultationTime
-          ? `✅ Thanks, ${data.name}! Your consultation request for "${leadData.consultationTime}" is received. We'll confirm shortly.`
-          : "✅ Thanks! Our team will follow up within 24 hours. Is there anything else I can help with?";
+        const confirmMsg = "✅ Thanks! Our team will follow up within 24 hours. Is there anything else I can help with?";
 
         addBotMessage(confirmMsg);
         UI.renderButtons(
@@ -233,12 +340,13 @@
       return;
     }
 
-    // Standard options
+    // 4. Standard quick-reply buttons
     if (node.options) {
       UI.renderButtons(node.options, (opt) => {
         addUserMessage(opt.label);
 
-        // Check for human/urgent intent in selected option
+        // Check for human/urgent intent in the selected option label
+        // This allows knowledge nodes to trigger escalation via button text
         const lower = opt.label.toLowerCase();
         if (HUMAN_KEYWORDS.some(kw => lower.includes(kw))) {
           Analytics.trackHandoff("user_requested");
@@ -251,44 +359,73 @@
           return;
         }
 
+        if (opt.next === "_whatsapp") {
+          window.open("https://wa.me/14164643575", "_blank", "noopener");
+          addBotMessage("WhatsApp is open in a new tab! Our team will reply shortly. Is there anything else I can help with?");
+          UI.renderButtons(
+            [{ label: "Back to main menu", next: "mainMenu" }, { label: "I'm all set!", next: "_end" }],
+            (o) => { addUserMessage(o.label); o.next === "_end" ? endConversation() : renderNode(o.next); }
+          );
+          return;
+        }
+
+        // Option-level `next` takes priority over node-level `next`
         if (opt.next) renderNode(opt.next);
         else if (node.next) renderNode(node.next);
       });
       return;
     }
 
-    // Fallback
+    // 5. Fallback — should only occur if a node has no options/form/calendly
     UI.renderButtons([{ label: "Back to menu", next: "mainMenu" }], (opt) => {
       addUserMessage(opt.label);
       renderNode(opt.next);
     });
   }
 
-  /* ===============================
+  /* ======================================================
      MESSAGE HELPERS
-     =============================== */
-  function addBotMessage(text, options = {}) {
-    UI.addMessage(text, "bot", options);
+     ====================================================== */
+
+  /**
+   * Add a bot message to the DOM and record it in conversation history.
+   * @param {string} text
+   */
+  function addBotMessage(text) {
+    UI.addMessage(text, "bot");
     recordMessage(text, "bot");
     Analytics.trackMessage("bot");
   }
 
+  /**
+   * Add a user message to the DOM and record it in conversation history.
+   * @param {string} text
+   */
   function addUserMessage(text) {
     UI.addMessage(text, "user");
     recordMessage(text, "user");
     Analytics.trackMessage("user");
   }
 
+  /**
+   * Append a message entry to the in-memory history array and save to sessionStorage.
+   * @param {string}          text
+   * @param {"bot"|"user"}    who
+   */
   function recordMessage(text, who) {
     conversationHistory.push({ text, who, at: Date.now() });
     saveHistory();
   }
 
-  /* ===============================
+  /* ======================================================
      FREE-TEXT INPUT HANDLING
-     =============================== */
+     ====================================================== */
 
-  /* -- Pattern dictionaries for natural language matching -- */
+  /*
+   * Pattern dictionaries for natural language matching.
+   * Each array is tested with String.includes() against the lowercased input.
+   * Order within handleTypedInput() determines which intent wins on ambiguous input.
+   */
   const GREETING_PATTERNS = [
     "hey", "hello", "hi", "hiya", "howdy", "yo", "sup", "what's up", "whats up",
     "good morning", "good afternoon", "good evening", "hola", "greetings", "heya"
@@ -336,10 +473,37 @@
     "holiday", "christmas", "end of year", "new year", "festive", "xmas"
   ];
 
+  /**
+   * Return true if the text includes any of the given patterns.
+   * @param {string}   text
+   * @param {string[]} patterns
+   * @returns {boolean}
+   */
   function matchesAny(text, patterns) {
     return patterns.some(p => text.includes(p));
   }
 
+  /**
+   * Process free-text typed by the user.
+   *
+   * Intent detection runs in a fixed priority order:
+   *   1. Human handoff keywords
+   *   2. Urgency keywords
+   *   3. Frustration keywords
+   *   4. Greetings
+   *   5. Thanks
+   *   6. Goodbye
+   *   7. Yes (context-dependent)
+   *   8. No / decline
+   *   9. About / company info
+   *   10. Location
+   *   11. Contact info
+   *   12. Business hours
+   *   13. Specific service keywords (cooking, retreat, virtual, holiday)
+   *   14. General service keywords (event, team, gift, wine, price, book, FAQ)
+   *   15. FAQ full-text search against knowledge base
+   *   16. Graceful fallback to main menu
+   */
   function handleTypedInput() {
     const text = inputEl.value.trim();
     if (!text) return;
@@ -347,6 +511,7 @@
     addUserMessage(text);
     inputEl.value = "";
 
+    // Strip punctuation for cleaner matching (keep apostrophes and hyphens)
     const lower = text.toLowerCase().replace(/[^\w\s''-]/g, "").trim();
 
     // --- 1. Human handoff intent ---
@@ -379,6 +544,7 @@
         "Hello! Welcome — I'm here to help you plan something amazing. What are you looking for?",
         "Hey! 😊 Ready to help you with events, gifting, wine experiences, and more. What's on your mind?"
       ];
+      // Pick a random greeting to keep the bot feeling dynamic
       addBotMessage(greetings[Math.floor(Math.random() * greetings.length)]);
       renderNodeActions(knowledge["mainMenu"], "mainMenu");
       return;
@@ -524,8 +690,8 @@
       return;
     }
     if (lower.includes("book") || lower.includes("reserve") || lower.includes("schedule") || lower.includes("appointment") || lower.includes("availability")) {
-      addBotMessage("Let's get you booked in! Here's how our process works.");
-      renderNode("booking_stage");
+      addBotMessage("Let's get you booked in!");
+      renderNode("consultation_booking");
       return;
     }
     if (lower.includes("faq") || lower.includes("question") || lower.includes("help") || lower.includes("info") || lower.includes("information")) {
@@ -550,6 +716,7 @@
     }
 
     // --- 16. Fallback (graceful) ---
+    // Rotate through several messages so repeated unknowns don't feel robotic
     const fallbacks = [
       "I'm not quite sure I follow, but no worries! Here are some ways I can help:",
       "Hmm, I want to make sure I get this right. How about picking from these options?",
@@ -560,11 +727,21 @@
     renderNodeActions(knowledge["mainMenu"], "mainMenu");
   }
 
-  /* ===============================
+  /* ======================================================
      FAQ SEARCH
-     =============================== */
+     ====================================================== */
+
+  /**
+   * Score and rank knowledge nodes against a free-text query.
+   * Each word in the query that appears in a node's text earns one point.
+   * Only nodes with score > 0 are returned, sorted best-first.
+   *
+   * @param {string} query - Lowercased search string (from typed input or search bar)
+   * @returns {Array<{key: string, text: string, score: number}>}
+   */
   function searchFAQ(query) {
     if (!query || query.length < 2) return [];
+    // Filter out very short words (stopwords, articles) that would inflate scores
     const words = query.split(/\s+/).filter(w => w.length > 2);
     if (words.length === 0) return [];
 
@@ -578,10 +755,13 @@
       })
       .filter(e => e.score > 0)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
+      .slice(0, 5); // cap results to keep the UI manageable
   }
 
-  /* ---- Dedicated FAQ search bar ---- */
+  /**
+   * Handle a submission from the dedicated FAQ search bar in the chat header.
+   * Clears and hides the search input after dispatching results.
+   */
   function handleFAQSearch() {
     const query = faqSearch.value.trim().toLowerCase();
     if (!query) return;
@@ -607,6 +787,10 @@
     toggleFAQSearch(false);
   }
 
+  /**
+   * Show or hide the FAQ search bar overlay in the chat header.
+   * @param {boolean} show - true to reveal and focus, false to hide
+   */
   function toggleFAQSearch(show) {
     if (show) {
       searchWrapper.classList.remove("hidden");
@@ -616,9 +800,14 @@
     }
   }
 
-  /* ===============================
+  /* ======================================================
      END CONVERSATION / RATING
-     =============================== */
+     ====================================================== */
+
+  /**
+   * Wrap up the conversation: show a farewell message and the star rating widget.
+   * Called when the user selects "I'm all set!" or types a goodbye phrase.
+   */
   function endConversation() {
     addBotMessage("Thanks for chatting with SommEvents! If you need anything else, just open the chat again. Have a great day! 🍷");
     UI.clearActions();
@@ -628,23 +817,28 @@
     });
   }
 
-  /* ===============================
+  /* ======================================================
      ESCALATION LISTENERS
-     =============================== */
+     ====================================================== */
+
+  /**
+   * React to automatic escalation events raised by Analytics.
+   * Prompts the user to speak with a human when engagement thresholds are crossed.
+   */
   Analytics.onEscalation((reason) => {
     if (reason === "repeated_pricing") {
-      // Track drop-off to escalation
+      // User has visited pricing nodes 3+ times — they likely need a custom quote
       Analytics.trackDropoff(currentNodeKey, { reason: "escalation_pricing_loop" });
-      
+
       addBotMessage("It looks like you have a lot of pricing questions — totally understandable. Would you like to speak with someone from our team for a detailed quote?");
       UI.renderButtons(
         [{ label: "Yes, connect me", next: "human" }, { label: "Not yet", next: "mainMenu" }],
         (opt) => { addUserMessage(opt.label); renderNode(opt.next); }
       );
     } else if (reason === "faq_loop_no_conversion") {
-      // Track drop-off to escalation
+      // User has read 3+ FAQs without leaving contact details
       Analytics.trackDropoff(currentNodeKey, { reason: "escalation_faq_loop" });
-      
+
       addBotMessage("You've been exploring a lot of great questions! Would it help to chat with someone from our team directly?");
       UI.renderButtons(
         [{ label: "Yes, please!", next: "human" }, { label: "I'm okay", next: "mainMenu" }],
@@ -653,14 +847,17 @@
     }
   });
 
-  /* ===============================
+  /* ======================================================
      EVENT LISTENERS
-     =============================== */
+     ====================================================== */
+
+  // Chat panel open/close/reset
   bubble.addEventListener("click", openChat);
   closeBtn.addEventListener("click", closeChat);
   resetBtn.addEventListener("click", resetChat);
   if (backBtn) backBtn.addEventListener("click", goBack);
 
+  // Free-text input — send on button click or Enter key
   sendBtn.addEventListener("click", handleTypedInput);
   inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") handleTypedInput();
@@ -679,14 +876,15 @@
     faqSearchToggle.addEventListener("click", () => toggleFAQSearch(true));
   }
 
-  // Keyboard: Escape to close
+  // Keyboard: Escape closes the panel
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !panel.classList.contains("hidden")) {
       closeChat();
     }
   });
 
-  // Trap focus inside panel when open (basic implementation)
+  // Focus trap — keep keyboard focus inside the panel while it is open
+  // (meets WCAG 2.1 SC 2.1.2 for modal dialogs)
   panel.addEventListener("keydown", (e) => {
     if (e.key === "Tab") {
       const focusable = panel.querySelectorAll("button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex='-1'])");
@@ -694,9 +892,11 @@
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (e.shiftKey && document.activeElement === first) {
+        // Shift+Tab on first element → wrap to last
         e.preventDefault();
         last.focus();
       } else if (!e.shiftKey && document.activeElement === last) {
+        // Tab on last element → wrap to first
         e.preventDefault();
         first.focus();
       }
