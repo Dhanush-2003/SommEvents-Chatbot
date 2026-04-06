@@ -137,10 +137,27 @@
   /**
    * Open the chat panel, restore or start a conversation, and focus the input.
    */
+  /* ---- Welcome nudge ---- */
+  const nudge = UI.$("welcome-nudge");
+  const nudgeCloseBtn = UI.$("nudge-close");
+
+  function dismissNudge() {
+    if (nudge) nudge.classList.add("hidden");
+    sessionStorage.setItem("somm_nudge_shown", "1");
+  }
+
+  if (nudge && nudgeCloseBtn && !sessionStorage.getItem("somm_nudge_shown")) {
+    setTimeout(() => {
+      if (panel.classList.contains("hidden")) nudge.classList.remove("hidden");
+    }, 5000);
+    nudgeCloseBtn.addEventListener("click", dismissNudge);
+  }
+
   function openChat() {
     panel.classList.remove("hidden");
     panel.classList.remove("closing");
     bubble.style.display = "none";
+    dismissNudge();
 
     if (UI.messagesEl.childElementCount === 0) {
       // Load previous history or start fresh
