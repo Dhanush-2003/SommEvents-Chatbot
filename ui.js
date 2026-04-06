@@ -66,10 +66,9 @@ const UI = (() => {
    * @param {"bot"|"user"} [who]  - Determines bubble alignment and colour
    * @returns {HTMLDivElement}    - The created element (callers rarely need this)
    */
-  function addMessage(text, who = "bot") {
+  function addMessage(text, who = "bot", options = {}) {
     const div = document.createElement("div");
     div.className = `msg ${who}`;
-    // role="log" tells screen readers this region receives updates
     div.setAttribute("role", "log");
 
     if (options.image) {
@@ -83,8 +82,6 @@ const UI = (() => {
     const span = document.createElement("span");
     span.textContent = text;
     div.appendChild(span);
-    // Use textContent (not innerHTML) to prevent XSS from user-typed input
-    div.textContent = text;
 
     messagesEl.appendChild(div);
     scrollToBottom();
