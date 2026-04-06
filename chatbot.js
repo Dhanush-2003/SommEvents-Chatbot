@@ -31,6 +31,34 @@
   const faqSearchClose  = UI.$("faq-search-close");
   const faqSearchToggle = UI.$("faq-search-toggle");
   const searchWrapper   = UI.$("search-wrapper");
+  const langToggle      = UI.$("lang-toggle");
+
+  /* ---- Language state ---- */
+  let currentLang = localStorage.getItem("somm_lang") || "en";
+  let activeKnowledge = currentLang === "fr" ? knowledgeFr : knowledge;
+  let activeFaqIndex  = currentLang === "fr" ? faqSearchIndexFr : faqSearchIndex;
+  if (langToggle) langToggle.textContent = currentLang === "fr" ? "EN" : "FR";
+
+  function switchLanguage() {
+    currentLang = currentLang === "en" ? "fr" : "en";
+    localStorage.setItem("somm_lang", currentLang);
+    activeKnowledge = currentLang === "fr" ? knowledgeFr : knowledge;
+    activeFaqIndex  = currentLang === "fr" ? faqSearchIndexFr : faqSearchIndex;
+    if (langToggle) {
+      langToggle.textContent = currentLang === "fr" ? "EN" : "FR";
+      langToggle.title = currentLang === "fr" ? "English" : "Français";
+      langToggle.setAttribute("aria-label", currentLang === "fr" ? "Switch to English" : "Passer en français");
+    }
+    UI.messagesEl.innerHTML = "";
+    UI.clearActions();
+    conversationHistory = [];
+    nodeHistory = [];
+    saveHistory();
+    currentNodeKey = "mainMenu";
+    renderNode("mainMenu");
+  }
+
+  if (langToggle) langToggle.addEventListener("click", switchLanguage);
 
   /* ---- State ---- */
   let currentNodeKey = "mainMenu";
@@ -126,7 +154,7 @@
 
     // Rebuild actions for the previous node (does not re-send bot message)
     UI.clearActions();
-    const node = knowledge[currentNodeKey];
+    const node = activeKnowledge[currentNodeKey];
     if (node) renderNodeActions(node, currentNodeKey);
   }
 
@@ -203,7 +231,7 @@
       UI.addMessage(entry.text, entry.who);
     });
     // Ensure back button state is correct and actions are rendered
-    const node = knowledge[currentNodeKey];
+    const node = activeKnowledge[currentNodeKey];
     if (node) {
       renderNodeActions(node, currentNodeKey);
     }
@@ -225,7 +253,7 @@
    *   skipHistory: true suppresses pushing to nodeHistory (used by goBack)
    */
   function renderNode(nodeKey, { skipHistory = false } = {}) {
-    const node = knowledge[nodeKey];
+    const node = activeKnowledge[nodeKey];
 
     currentNodeKey = nodeKey;
     updateBackButton();
@@ -561,7 +589,7 @@
       ];
       // Pick a random greeting to keep the bot feeling dynamic
       addBotMessage(greetings[Math.floor(Math.random() * greetings.length)]);
-      renderNodeActions(knowledge["mainMenu"], "mainMenu");
+      renderNodeActions(activeKnowledge["mainMenu"], "mainMenu");
       return;
     }
 
@@ -595,7 +623,7 @@
         return;
       }
       // If on a CTA or node with a next, follow through
-      const node = knowledge[currentNodeKey];
+      const node = activeKnowledge[currentNodeKey];
       if (node && node.next) {
         addBotMessage("Great! Let's keep going.");
         renderNode(node.next);
@@ -619,7 +647,7 @@
     // --- 9. About / who are you ---
     if (matchesAny(lower, ABOUT_PATTERNS)) {
       addBotMessage("SommEvents is Ontario's premier corporate event planning and wine experience company! With 10+ years of experience, we specialize in creating thoughtful, elevated events — no generic experiences here. We handle everything from corporate retreats and team building to custom gifting and sommelier-led wine tastings. 🍷\n\nWhat would you like to explore?");
-      renderNodeActions(knowledge["mainMenu"], "mainMenu");
+      renderNodeActions(activeKnowledge["mainMenu"], "mainMenu");
       return;
     }
 
@@ -739,7 +767,7 @@
       "Not sure I caught that, but I'm here to help! Try one of these options:"
     ];
     addBotMessage(fallbacks[Math.floor(Math.random() * fallbacks.length)]);
-    renderNodeActions(knowledge["mainMenu"], "mainMenu");
+    renderNodeActions(activeKnowledge["mainMenu"], "mainMenu");
   }
 
   /* ======================================================
@@ -760,7 +788,7 @@
     const words = query.split(/\s+/).filter(w => w.length > 2);
     if (words.length === 0) return [];
 
-    return faqSearchIndex
+    return activeFaqIndex
       .map(entry => {
         let score = 0;
         words.forEach(w => {
