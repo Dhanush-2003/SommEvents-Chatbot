@@ -383,7 +383,21 @@
     });
   }
 
-  /* ======================================================
+  /* ===============================
+     NOTIFICATION SOUND
+     =============================== */
+  const notifAudio = document.getElementById("notif-sound");
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function playNotificationSound() {
+    if (prefersReducedMotion.matches) return;
+    if (panel.classList.contains("hidden")) return;
+    if (!notifAudio) return;
+    notifAudio.currentTime = 0;
+    notifAudio.play().catch(() => {});
+  }
+
+  /* ===============================
      MESSAGE HELPERS
      ====================================================== */
 
@@ -395,6 +409,7 @@
     UI.addMessage(text, "bot");
     recordMessage(text, "bot");
     Analytics.trackMessage("bot");
+    playNotificationSound();
   }
 
   /**
