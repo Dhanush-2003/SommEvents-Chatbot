@@ -1,5 +1,34 @@
 /* =========================================================
    SommEvents – Comprehensive Knowledge Base
+   =========================================================
+   Defines the full conversation tree consumed by chatbot.js.
+
+   Each key is a NODE that the state machine can navigate to.
+   chatbot.js calls renderNode(key) to display a node.
+
+   NODE SCHEMA
+   -----------
+   message      {string}    Bot message shown when entering this node.
+   options      {Array}     Quick-reply buttons:
+                              label  {string}  Button text
+                              next   {string}  Target node key (optional)
+                              tag    {string}  Analytics tag (optional)
+   next         {string}    Default destination when options share one target.
+   tag          {string}    Analytics tag recorded on every visit to this node.
+   capture      {boolean}   Render a multi-select checklist instead of buttons.
+   fields       {string[]}  Checklist labels (requires capture: true).
+   form         {boolean}   Render the lead-capture form.
+   formFields   {string[]}  Field keys for the form (default: ["name","email"]).
+   calendly     {string}    Calendly URL — renders the booking prompt widget.
+
+   ANALYTICS TAGS (conventions)
+   ----------------------------
+   Sales_Event    – event planning intent
+   Sales_Gifting  – gifting intent
+   Sales_SipClub  – wine / Sip Club intent
+   Support_Pricing – pricing / booking questions
+   Support_FAQ     – FAQ browsing
+   Support_General – human handoff / general support
    ========================================================= */
 
 const knowledge = {
@@ -58,9 +87,9 @@ const knowledge = {
   event_cta: {
     message: "Thanks for sharing! We can absolutely support this. What would you like to do next?",
     options: [
-      { label: "Request a proposal",   next: "lead_capture" },
-      { label: "Book a consultation",  next: "lead_capture" },
-      { label: "Ask another question", next: "mainMenu" }
+      { label: "Request a proposal",        next: "lead_capture" },
+      { label: "📅 Book a consultation",     next: "consultation_booking" },
+      { label: "Ask another question",       next: "mainMenu" }
     ],
     tag: "Sales_Event"
   },
@@ -116,6 +145,8 @@ const knowledge = {
 
   tb_examples: {
     message: "Here are some of our most popular experiences:\n\n🍷 Wine & Food Pairing — guided tastings with a certified sommelier\n🍳 Culinary Challenges — hands-on team cooking competitions\n🧠 Strategy & Innovation Workshops — creative problem-solving\n🎨 Art & Wine Nights — paint + sip for team bonding\n🌿 Outdoor Adventures — vineyard tours, scavenger hunts\n💻 Virtual Tastings — curated kits shipped to each participant\n\nWant to explore any of these further?",
+    image: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=600&q=80",
+    imageAlt: "Team building experience",
     options: [
       { label: "Request a quote",  next: "lead_capture" },
       { label: "Ask a question",   next: "faq_team_building" },
@@ -175,6 +206,8 @@ const knowledge = {
 
   gifting_options: {
     message: "Here's a taste of what we offer:\n\n🎁 Curated Gift Boxes — wine, artisanal foods, branded items\n🍷 Wine Collections — hand-picked selections by our sommeliers\n🧀 Charcuterie & Wine Sets — ready-to-enjoy pairings\n🌿 Wellness & Non-Alcoholic — teas, gourmet treats, self-care\n✨ Custom Branded — your logo, your style, our expertise\n📦 Bulk Programs — corporate gifting at scale with delivery logistics\n\nAll gifts can be customized and shipped anywhere in Canada.",
+    image: "https://images.unsplash.com/photo-1549465220-1a8b9238f862?w=600&q=80",
+    imageAlt: "Curated gift box with wine and artisanal items",
     options: [
       { label: "Start a gifting program",  next: "lead_capture" },
       { label: "Ask a question",           next: "faq_gifting" },
@@ -188,6 +221,8 @@ const knowledge = {
      ------------------------------------------------------- */
   wine: {
     message: "Wine is at the heart of everything we do! What interests you most?",
+    image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80",
+    imageAlt: "Wine tasting experience",
     options: [
       { label: "Wine Tasting Experience", next: "wine_route" },
       { label: "Corporate Wine Event",    next: "wine_corporate" },
@@ -303,7 +338,7 @@ const knowledge = {
     message: "Got it! Let's move things forward.",
     options: [
       { label: "Request detailed pricing",  next: "lead_capture" },
-      { label: "Book a consultation",        next: "lead_capture" },
+      { label: "📅 Book a consultation",     next: "consultation_booking" },
       { label: "Talk to a human",            next: "human" }
     ],
     tag: "Support_Pricing"
@@ -331,6 +366,7 @@ const knowledge = {
       { label: "📧 Have someone email me",    next: "lead_capture" },
       { label: "📞 Request a call back",       next: "lead_capture_phone" },
       { label: "📅 Book a consultation",       next: "consultation_booking" },
+      { label: "💬 Chat on WhatsApp",          next: "_whatsapp" },
       { label: "Not right now",                next: "mainMenu" }
     ],
     tag: "Support_General"
@@ -354,11 +390,11 @@ const knowledge = {
   },
 
   /* -------------------------------------------------------
-     CONSULTATION BOOKING (Calendar Widget)
+     CONSULTATION BOOKING (Calendly)
      ------------------------------------------------------- */
   consultation_booking: {
-    message: "Let's find a time to chat! Pick a date and time that works for you:",
-    calendar: true,
+    message: "Let's find a time to chat! You can book a consultation directly on our calendar — pick whatever time works best for you:",
+    calendly: "https://calendly.com/marte",
     tag: "Lead_Capture"
   },
 
@@ -775,7 +811,11 @@ const knowledge = {
 };
 
 /* -------------------------------------------------------
-   FAQ SEARCH INDEX — flat array for text search
+   FAQ SEARCH INDEX
+   -------------------------------------------------------
+   Flat array built once at load time from all nodes whose
+   key starts with "faq_". Each entry stores the lowercased
+   node message for fast substring matching in chatbot.js.
    ------------------------------------------------------- */
 const faqSearchIndex = [];
 (function buildFaqIndex() {
