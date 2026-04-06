@@ -405,8 +405,8 @@
    * Add a bot message to the DOM and record it in conversation history.
    * @param {string} text
    */
-  function addBotMessage(text) {
-    UI.addMessage(text, "bot");
+  function addBotMessage(text, options = {}) {
+    UI.addMessage(text, "bot", options);
     recordMessage(text, "bot");
     Analytics.trackMessage("bot");
     playNotificationSound();
