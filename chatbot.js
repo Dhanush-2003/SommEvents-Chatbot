@@ -31,6 +31,7 @@
   const faqSearchClose  = UI.$("faq-search-close");
   const faqSearchToggle = UI.$("faq-search-toggle");
   const searchWrapper   = UI.$("search-wrapper");
+  const unreadBadge     = UI.$("unread-badge");
 
   /* ---- State ---- */
   let currentNodeKey = "mainMenu";
@@ -141,6 +142,7 @@
     panel.classList.remove("hidden");
     panel.classList.remove("closing");
     bubble.style.display = "none";
+    if (unreadBadge) unreadBadge.classList.add("hidden");
 
     if (UI.messagesEl.childElementCount === 0) {
       // Load previous history or start fresh
@@ -410,6 +412,9 @@
     recordMessage(text, "bot");
     Analytics.trackMessage("bot");
     playNotificationSound();
+    if (panel.classList.contains("hidden") && unreadBadge) {
+      unreadBadge.classList.remove("hidden");
+    }
   }
 
   /**
