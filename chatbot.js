@@ -398,7 +398,13 @@
       return;
     }
 
-    // 5. Fallback — should only occur if a node has no options/form/calendly
+    // 5. freeTextNext — node expects typed input; just focus the input box
+    if (node.freeTextNext) {
+      inputEl.focus();
+      return;
+    }
+
+    // 6. Fallback — should only occur if a node has no options/form/calendly/freeTextNext
     UI.renderButtons([{ label: "Back to menu", next: "mainMenu" }], (opt) => {
       addUserMessage(opt.label);
       renderNode(opt.next);
@@ -550,6 +556,12 @@
 
     addUserMessage(text);
     inputEl.value = "";
+
+    const currentNode = knowledge[currentNodeKey];
+    if (currentNode && currentNode.freeTextNext) {
+      renderNode(currentNode.freeTextNext);
+      return;
+    }
 
     // Strip punctuation for cleaner matching (keep apostrophes and hyphens)
     const lower = text.toLowerCase().replace(/[^\w\s''-]/g, "").trim();

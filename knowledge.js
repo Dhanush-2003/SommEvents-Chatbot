@@ -20,6 +20,8 @@
    form         {boolean}   Render the lead-capture form.
    formFields   {string[]}  Field keys for the form (default: ["name","email"]).
    calendly     {string}    Calendly URL — renders the booking prompt widget.
+   freeTextNext {string}    When set, typed input advances to this node instead
+                             of keyword-matching. Used for open-ended questions.
 
    ANALYTICS TAGS (conventions)
    ----------------------------
@@ -80,11 +82,28 @@ const knowledge = {
   event_date_check: {
     message: "Do you have a date in mind, or are you still exploring?",
     options: [
-      { label: "I have a specific date" },
-      { label: "I have a month / season" },
-      { label: "Still exploring" }
+      { label: "I have a specific date",  next: "event_date_specific" },
+      { label: "I have a month / season",  next: "event_date_month" },
+      { label: "Still exploring",           next: "event_date_exploring" }
     ],
-    next: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_date_specific: {
+    message: "What date are you considering?",
+    freeTextNext: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_date_month: {
+    message: "What month or timeframe are you targeting?",
+    freeTextNext: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_date_exploring: {
+    message: "No problem — roughly when are you hoping to host it?",
+    freeTextNext: "event_guests",
     tag: "Sales_Event"
   },
 
