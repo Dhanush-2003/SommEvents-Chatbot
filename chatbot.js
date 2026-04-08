@@ -167,7 +167,9 @@
       if (conversationHistory.length > 0) {
         replayHistory();
       } else {
-        renderNode("mainMenu");
+        const isReturning = localStorage.getItem("somm_visited");
+        renderNode(isReturning ? "mainMenu_return" : "mainMenu");
+        localStorage.setItem("somm_visited", "1");
       }
     }
     updateBackButton();
@@ -333,11 +335,12 @@
       const fields = node.formFields || ["name", "email"];
       UI.renderLeadForm(fields, (data) => {
         UI.clearActions();
-        // Build a human-readable summary to echo back as the user "message"
-        const summary = data.phone
-          ? `${data.name} — ${data.email} — ${data.phone}`
-          : `${data.name} — ${data.email}`;
-        addUserMessage(summary);
+        const parts = [];
+        if (data.name) parts.push(data.name);
+        if (data.company) parts.push(data.company);
+        if (data.email) parts.push(data.email);
+        if (data.phone) parts.push(data.phone);
+        addUserMessage(parts.join(" — "));
 
         Analytics.trackLead(data);
 
