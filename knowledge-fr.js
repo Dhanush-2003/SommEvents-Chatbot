@@ -51,11 +51,28 @@ const knowledgeFr = {
   event_date_check: {
     message: "Avez-vous une date en tête, ou êtes-vous encore en exploration ?",
     options: [
-      { label: "J'ai une date précise" },
-      { label: "J'ai un mois / une saison" },
-      { label: "J'explore encore" }
+      { label: "J'ai une date précise",    next: "event_date_specific" },
+      { label: "J'ai un mois / une saison", next: "event_date_month" },
+      { label: "J'explore encore",           next: "event_date_exploring" }
     ],
-    next: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_date_specific: {
+    message: "Quelle date envisagez-vous ?",
+    freeTextNext: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_date_month: {
+    message: "Quel mois ou quelle période visez-vous ?",
+    freeTextNext: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_date_exploring: {
+    message: "Pas de souci — à peu près quand souhaitez-vous organiser l'événement ?",
+    freeTextNext: "event_guests",
     tag: "Sales_Event"
   },
 
