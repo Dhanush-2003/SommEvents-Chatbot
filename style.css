@@ -1,6 +1,6 @@
 /* =========================================================
    SommEvents – Production Stylesheet
-   Wine-themed: burgundy, gold, cream, dark
+   Sage-green themed: sage, gold, cream, dark
    ========================================================= */
 
 /* ---------- DESIGN TOKENS ---------- */
@@ -15,9 +15,9 @@
   --border: rgba(26,26,26,0.12);
   --border-light: rgba(26,26,26,0.08);
 
-  /* Brand Colors — wine-themed palette */
-  --burgundy: rgb(133, 0, 3);
-  --burgundy-dark: rgb(133, 0, 3);
+  /* Brand Colors — sage-green palette */
+  --burgundy: rgb(74, 93, 78);
+  --burgundy-dark: rgb(55, 73, 59);
   --gold: #C9A96E;
   --gold-light: #E8C98A;
   --cream: #F5F1E8;
@@ -473,7 +473,7 @@ html, body {
 }
 
 .form-input.error {
-  border-color: #850003;
+  border-color: #4A5D4E;
   animation: shake 0.3s ease;
 }
 
