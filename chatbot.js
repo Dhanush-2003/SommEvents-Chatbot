@@ -195,7 +195,9 @@
       if (conversationHistory.length > 0) {
         replayHistory();
       } else {
-        renderNode("mainMenu");
+        const isReturning = localStorage.getItem("somm_visited");
+        renderNode(isReturning ? "mainMenu_return" : "mainMenu");
+        localStorage.setItem("somm_visited", "1");
       }
     }
     updateBackButton();
@@ -361,11 +363,12 @@
       const fields = node.formFields || ["name", "email"];
       UI.renderLeadForm(fields, (data) => {
         UI.clearActions();
-        // Build a human-readable summary to echo back as the user "message"
-        const summary = data.phone
-          ? `${data.name} — ${data.email} — ${data.phone}`
-          : `${data.name} — ${data.email}`;
-        addUserMessage(summary);
+        const parts = [];
+        if (data.name) parts.push(data.name);
+        if (data.company) parts.push(data.company);
+        if (data.email) parts.push(data.email);
+        if (data.phone) parts.push(data.phone);
+        addUserMessage(parts.join(" — "));
 
         Analytics.trackLead(data);
 
@@ -888,10 +891,63 @@
   function endConversation() {
     addBotMessage("Thanks for chatting with SommEvents! If you need anything else, just open the chat again. Have a great day! 🍷");
     UI.clearActions();
+
+    UI.renderButtons(
+      [{ label: "📧 Email me this conversation", next: "_transcript" }, { label: "No thanks", next: "_skip" }],
+      (opt) => {
+        addUserMessage(opt.label);
+        if (opt.next === "_transcript") {
+          promptTranscriptEmail();
+        } else {
+          showEndRating();
+        }
+      }
+    );
+  }
+
+  function showEndRating() {
     UI.showRating((rating) => {
       Analytics.trackRating(rating);
       addBotMessage(`Thanks for the ${rating}-star rating! We appreciate your feedback.`);
     });
+  }
+
+  const SUPABASE_FUNC_URL = "https://sxaisrcdheafiqerqwyu.supabase.co/functions/v1/send-transcript";
+
+  function promptTranscriptEmail() {
+    addBotMessage("Sure! What email should I send it to?");
+    UI.clearActions();
+
+    const handler = function transcriptHandler(e) {
+      if (e.type === "keydown" && e.key !== "Enter") return;
+      const email = inputEl.value.trim();
+      if (!email) return;
+      inputEl.value = "";
+      addUserMessage(email);
+      inputEl.removeEventListener("keydown", transcriptHandler);
+      sendBtn.removeEventListener("click", transcriptHandler);
+      sendTranscript(email);
+    };
+
+    inputEl.addEventListener("keydown", handler);
+    sendBtn.addEventListener("click", handler);
+    inputEl.focus();
+  }
+
+  async function sendTranscript(email) {
+    addBotMessage("Sending your transcript…");
+    try {
+      const res = await fetch(SUPABASE_FUNC_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, messages: conversationHistory })
+      });
+      if (!res.ok) throw new Error("Request failed");
+      addBotMessage("Done! Check your inbox — the transcript is on its way. 📬");
+    } catch {
+      addBotMessage("Sorry, I couldn't send the email right now. You can try again later!");
+    }
+    showEndRating();
   }
 
   /* ======================================================

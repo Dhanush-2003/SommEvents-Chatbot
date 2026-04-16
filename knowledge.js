@@ -20,6 +20,8 @@
    form         {boolean}   Render the lead-capture form.
    formFields   {string[]}  Field keys for the form (default: ["name","email"]).
    calendly     {string}    Calendly URL — renders the booking prompt widget.
+   freeTextNext {string}    When set, typed input advances to this node instead
+                             of keyword-matching. Used for open-ended questions.
 
    ANALYTICS TAGS (conventions)
    ----------------------------
@@ -37,135 +39,262 @@ const knowledge = {
      MAIN MENU
      ------------------------------------------------------- */
   mainMenu: {
-    message: "Hi there! 👋 Welcome to SommEvents — Ontario's premier corporate event planning & wine experience company. How can I help you today?",
+    message: "Planning a corporate event, team experience, or client activation? Let's create something unforgettable — what are you looking to plan?",
     options: [
-      { label: "🎉 Plan an Event",               next: "plan_event",    tag: "Sales_Event" },
-      { label: "🤝 Team Building & Experiences",  next: "team_building", tag: "Sales_Event" },
-      { label: "🎁 Corporate & Custom Gifting",   next: "gifting",       tag: "Sales_Gifting" },
-      { label: "🍷 Wine Experiences & Sip Club",  next: "wine",          tag: "Sales_SipClub" },
-      { label: "💰 Pricing, Booking & Logistics", next: "pricing",       tag: "Support_Pricing" },
-      { label: "💬 Talk to a Human",              next: "human",         tag: "Support_General" }
+      { label: "🎉 Plan a Corporate Event",              next: "plan_event",    tag: "Sales_Event" },
+      { label: "🤝 Team Building & Experiences",          next: "team_building", tag: "Sales_Event" },
+      { label: "🎁 Client & Custom Gifting",              next: "gifting",       tag: "Sales_Gifting" },
+      { label: "🍷 Wine Tasting Experiences & Sip Club",  next: "wine",          tag: "Sales_SipClub" },
+      { label: "❓ Not Sure Yet — Help Me Decide",        next: "not_sure",      tag: "Sales_Event" },
+      { label: "💬 Talk to a Human",                      next: "human",         tag: "Support_General" }
+    ]
+  },
+
+  mainMenu_return: {
+    message: "Welcome back! Great to see you again. What can I help with today?",
+    options: [
+      { label: "🎉 Plan a Corporate Event",              next: "plan_event",    tag: "Sales_Event" },
+      { label: "🤝 Team Building & Experiences",          next: "team_building", tag: "Sales_Event" },
+      { label: "🎁 Client & Custom Gifting",              next: "gifting",       tag: "Sales_Gifting" },
+      { label: "🍷 Wine Tasting Experiences & Sip Club",  next: "wine",          tag: "Sales_SipClub" },
+      { label: "❓ Not Sure Yet — Help Me Decide",        next: "not_sure",      tag: "Sales_Event" },
+      { label: "💬 Talk to a Human",                      next: "human",         tag: "Support_General" }
     ]
   },
 
   /* -------------------------------------------------------
-     1. PLAN AN EVENT
+     1. PLAN A CORPORATE EVENT
      ------------------------------------------------------- */
   plan_event: {
-    message: "Excellent! We love bringing events to life. What kind of event are you planning?",
+    message: "Great! What kind of event are you planning?",
     options: [
+      { label: "Internal team event" },
       { label: "Meeting or Conference" },
+      { label: "Client event" },
       { label: "Corporate Retreat" },
-      { label: "Client or Executive Event" },
-      { label: "Holiday or Celebration" },
-      { label: "Not Sure Yet" }
+      { label: "Holiday / Celebration" },
+      { label: "Not sure yet" }
     ],
-    next: "planning_scope",
+    next: "event_date_check",
     tag: "Sales_Event"
   },
 
-  planning_scope: {
-    message: "How much support are you looking for?",
+  event_date_check: {
+    message: "Do you have a date in mind, or are you still exploring?",
+    options: [
+      { label: "I have a specific date",  next: "event_date_specific" },
+      { label: "I have a month / season",  next: "event_date_month" },
+      { label: "Still exploring",           next: "event_date_exploring" }
+    ],
+    tag: "Sales_Event"
+  },
+
+  event_date_specific: {
+    message: "What date are you considering?",
+    freeTextNext: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_date_month: {
+    message: "What month or timeframe are you targeting?",
+    freeTextNext: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_date_exploring: {
+    message: "No problem — roughly when are you hoping to host it?",
+    freeTextNext: "event_guests",
+    tag: "Sales_Event"
+  },
+
+  event_guests: {
+    message: "Approximately how many guests are you planning for?",
+    options: [
+      { label: "10–25" },
+      { label: "25–50" },
+      { label: "50–100" },
+      { label: "100+" },
+      { label: "Not sure yet" }
+    ],
+    next: "event_location",
+    tag: "Sales_Event"
+  },
+
+  event_location: {
+    message: "Is there a city, venue, or region you're considering?",
+    options: [
+      { label: "GTA / Toronto" },
+      { label: "Niagara region" },
+      { label: "Elsewhere in Ontario" },
+      { label: "Another province" },
+      { label: "Not sure yet" }
+    ],
+    next: "event_support",
+    tag: "Sales_Event"
+  },
+
+  event_support: {
+    message: "What level of support are you looking for?",
     options: [
       { label: "Full-service planning" },
-      { label: "Partial planning / support" },
-      { label: "On-site coordination only" },
-      { label: "Just exploring options" }
+      { label: "Venue + experience support" },
+      { label: "Just exploring ideas" },
+      { label: "Not sure yet" }
     ],
-    next: "event_details",
+    next: "event_budget",
     tag: "Sales_Event"
   },
 
-  event_details: {
-    message: "Great! To tailor our recommendations, which details do you already have?",
-    capture: true,
-    fields: ["Event date or timeframe", "Number of guests", "Location or city", "Budget range"],
-    next: "event_cta",
-    tag: "Sales_Event"
-  },
-
-  event_cta: {
-    message: "Thanks for sharing! We can absolutely support this. What would you like to do next?",
+  event_budget: {
+    message: "To tailor this properly, do you have a budget range in mind?",
     options: [
-      { label: "Request a proposal",        next: "lead_capture" },
-      { label: "📅 Book a consultation",     next: "consultation_booking" },
-      { label: "Ask another question",       next: "mainMenu" }
+      { label: "$5K – $10K" },
+      { label: "$10K – $25K" },
+      { label: "$25K+" },
+      { label: "Not sure yet" }
     ],
+    next: "event_atmosphere",
     tag: "Sales_Event"
+  },
+
+  event_atmosphere: {
+    message: "Perfect — what kind of atmosphere are you looking to create?",
+    options: [
+      { label: "Elevated & polished" },
+      { label: "Fun & interactive" },
+      { label: "Relaxed & social" },
+      { label: "Custom / not sure yet" }
+    ],
+    next: "event_lead_capture",
+    tag: "Sales_Event"
+  },
+
+  event_lead_capture: {
+    message: "This is a great starting point. Where should we send your tailored event recommendations?",
+    form: true,
+    formFields: ["name", "company", "email", "phone"],
+    tag: "Lead_Capture"
   },
 
   /* -------------------------------------------------------
      2. TEAM BUILDING & EXPERIENCES
      ------------------------------------------------------- */
   team_building: {
-    message: "Team experiences are what we do best — no awkward icebreakers, we promise! What type of experience interests you?",
+    message: "What kind of team experience are you looking for?",
     options: [
-      { label: "Team Building Activity" },
-      { label: "Leadership Development" },
-      { label: "Workshop or Learning" },
-      { label: "Retreat Add-on Activity" }
+      { label: "Interactive / Hands-on" },
+      { label: "Relaxed / Social" },
+      { label: "Education / Workshop" },
+      { label: "Not sure" }
     ],
-    next: "tb_format",
+    next: "tb_group_size",
     tag: "Sales_Event"
   },
 
-  tb_format: {
-    message: "What format works best for your group?",
+  tb_group_size: {
+    message: "How many people are we planning for?",
     options: [
-      { label: "In-person" },
+      { label: "5–15" },
+      { label: "15–30" },
+      { label: "30–50" },
+      { label: "50+" },
+      { label: "Not sure yet" }
+    ],
+    next: "tb_setting",
+    tag: "Sales_Event"
+  },
+
+  tb_setting: {
+    message: "Is this in-office, offsite, virtual, or flexible?",
+    options: [
+      { label: "In-office" },
+      { label: "Offsite" },
       { label: "Virtual" },
-      { label: "Hybrid" },
-      { label: "Open to ideas" }
+      { label: "Flexible" }
     ],
-    next: "tb_goals",
+    next: "tb_budget",
     tag: "Sales_Event"
   },
 
-  tb_goals: {
-    message: "What's the primary goal or tone you're going for?",
+  tb_budget: {
+    message: "Do you have a rough budget per person or overall in mind?",
     options: [
-      { label: "Team connection & bonding" },
-      { label: "Celebration or reward" },
-      { label: "Learning & development" },
-      { label: "Client or partner engagement" }
+      { label: "Under $50 / person" },
+      { label: "$50 – $100 / person" },
+      { label: "$100 – $200 / person" },
+      { label: "$200+ / person" },
+      { label: "Not sure yet" }
     ],
-    next: "tb_cta",
+    next: "tb_timeline",
     tag: "Sales_Event"
   },
 
-  tb_cta: {
-    message: "Love it! Here's what we can do next:",
+  tb_timeline: {
+    message: "When are you hoping to run this?",
     options: [
-      { label: "See experience examples", next: "tb_examples" },
-      { label: "Request a quote",         next: "lead_capture" },
-      { label: "Talk to our team",        next: "human" }
+      { label: "This month" },
+      { label: "Next 1–3 months" },
+      { label: "3–6 months out" },
+      { label: "Not sure yet" }
     ],
+    next: "tb_lead_capture",
     tag: "Sales_Event"
   },
 
-  tb_examples: {
-    message: "Here are some of our most popular experiences:\n\n🍷 Wine & Food Pairing — guided tastings with a certified sommelier\n🍳 Culinary Challenges — hands-on team cooking competitions\n🧠 Strategy & Innovation Workshops — creative problem-solving\n🎨 Art & Wine Nights — paint + sip for team bonding\n🌿 Outdoor Adventures — vineyard tours, scavenger hunts\n💻 Virtual Tastings — curated kits shipped to each participant\n\nWant to explore any of these further?",
-    image: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=600&q=80",
-    imageAlt: "Team building experience",
-    options: [
-      { label: "Request a quote",  next: "lead_capture" },
-      { label: "Ask a question",   next: "faq_team_building" },
-      { label: "Back to menu",     next: "mainMenu" }
-    ],
-    tag: "Sales_Event"
+  tb_lead_capture: {
+    message: "Got it — this is exactly what we specialize in. Where should we send a few curated options?",
+    form: true,
+    formFields: ["email"],
+    tag: "Lead_Capture"
   },
 
   /* -------------------------------------------------------
-     3. CORPORATE & CUSTOM GIFTING
+     3. CLIENT & CUSTOM GIFTING
      ------------------------------------------------------- */
   gifting: {
-    message: "Great choice — a thoughtful gift goes a long way! What's the occasion?",
+    message: "Who are the gifts for?",
     options: [
-      { label: "Holiday gifting" },
-      { label: "Client appreciation" },
-      { label: "Employee recognition" },
-      { label: "Event-related gifting" },
-      { label: "Special occasion" }
+      { label: "Clients" },
+      { label: "Employees" },
+      { label: "Event Attendees" },
+      { label: "Holiday Gifting" },
+      { label: "Special Occasion" }
+    ],
+    next: "gifting_quantity",
+    tag: "Sales_Gifting"
+  },
+
+  gifting_quantity: {
+    message: "How many recipients?",
+    options: [
+      { label: "1–10" },
+      { label: "10–25" },
+      { label: "25–50" },
+      { label: "50–100" },
+      { label: "100+" }
+    ],
+    next: "gifting_style",
+    tag: "Sales_Gifting"
+  },
+
+  gifting_style: {
+    message: "Are you looking for fully branded/custom or curated ready-to-send options?",
+    options: [
+      { label: "Fully custom" },
+      { label: "Curated" },
+      { label: "Not sure" }
+    ],
+    next: "gifting_budget",
+    tag: "Sales_Gifting"
+  },
+
+  gifting_budget: {
+    message: "Do you have a budget per gift in mind?",
+    options: [
+      { label: "$100 minimum" },
+      { label: "$100 – $150" },
+      { label: "$150 – $250" },
+      { label: "$250+" }
     ],
     next: "gifting_alcohol",
     tag: "Sales_Gifting"
@@ -176,102 +305,99 @@ const knowledge = {
     options: [
       { label: "Yes — wine or spirits" },
       { label: "No — non-alcoholic only" },
-      { label: "Mix — some of each" }
+      { label: "Mix of each" }
     ],
-    next: "gifting_scale",
+    next: "gifting_delivery",
     tag: "Sales_Gifting"
   },
 
-  gifting_scale: {
-    message: "How many recipients are you gifting?",
+  gifting_delivery: {
+    message: "When do you need these delivered?",
     options: [
-      { label: "1–10" },
-      { label: "11–50" },
-      { label: "51–200" },
-      { label: "200+" }
+      { label: "Within 2 weeks" },
+      { label: "2–4 weeks" },
+      { label: "1–2 months" },
+      { label: "3+ months" },
+      { label: "Not sure yet" }
     ],
-    next: "gifting_cta",
+    next: "gifting_lead_capture",
     tag: "Sales_Gifting"
   },
 
-  gifting_cta: {
-    message: "We'll curate something special. What would you like to do?",
-    options: [
-      { label: "Explore gift options",      next: "gifting_options" },
-      { label: "Start a gifting program",   next: "lead_capture" },
-      { label: "Speak with a specialist",   next: "human" }
-    ],
-    tag: "Sales_Gifting"
-  },
-
-  gifting_options: {
-    message: "Here's a taste of what we offer:\n\n🎁 Curated Gift Boxes — wine, artisanal foods, branded items\n🍷 Wine Collections — hand-picked selections by our sommeliers\n🧀 Charcuterie & Wine Sets — ready-to-enjoy pairings\n🌿 Wellness & Non-Alcoholic — teas, gourmet treats, self-care\n✨ Custom Branded — your logo, your style, our expertise\n📦 Bulk Programs — corporate gifting at scale with delivery logistics\n\nAll gifts can be customized and shipped anywhere in Canada.",
-    image: "https://images.unsplash.com/photo-1549465220-1a8b9238f862?w=600&q=80",
-    imageAlt: "Curated gift box with wine and artisanal items",
-    options: [
-      { label: "Start a gifting program",  next: "lead_capture" },
-      { label: "Ask a question",           next: "faq_gifting" },
-      { label: "Back to menu",             next: "mainMenu" }
-    ],
-    tag: "Sales_Gifting"
+  gifting_lead_capture: {
+    message: "Perfect — we'll build a few tailored gifting concepts for you. Where should we send them?",
+    form: true,
+    formFields: ["email"],
+    tag: "Lead_Capture"
   },
 
   /* -------------------------------------------------------
-     4. WINE EXPERIENCES & SIP CLUB
+     4. WINE TASTING EXPERIENCES & SIP CLUB
      ------------------------------------------------------- */
   wine: {
-    message: "Wine is at the heart of everything we do! What interests you most?",
-    image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80",
-    imageAlt: "Wine tasting experience",
+    message: "Is this for a private group, corporate team, or ongoing program?",
     options: [
-      { label: "Wine Tasting Experience", next: "wine_route" },
-      { label: "Corporate Wine Event",    next: "wine_corporate" },
-      { label: "Sip Club Subscription",  next: "sip_club" },
-      { label: "Wine Gifting",           next: "gifting" },
-      { label: "Just Learning More",     next: "faq_wine" }
+      { label: "Private Group",            next: "wine_participants" },
+      { label: "Corporate Wine Event",     next: "wine_participants" },
+      { label: "Sip Club Subscription",    next: "sip_club" },
+      { label: "Wine Gifting",             next: "gifting" },
+      { label: "I'd like to learn more",   next: "faq_wine" }
     ],
     tag: "Sales_SipClub"
   },
 
-  wine_route: {
-    message: "Is this for a corporate group or a private / personal occasion?",
+  wine_participants: {
+    message: "How many participants?",
     options: [
-      { label: "Corporate group",      next: "wine_corporate" },
-      { label: "Private / personal",   next: "wine_private" }
+      { label: "2–10" },
+      { label: "10–25" },
+      { label: "25–50" },
+      { label: "50+" }
     ],
+    next: "wine_format",
     tag: "Sales_SipClub"
   },
 
-  wine_corporate: {
-    message: "Our corporate wine experiences are designed to impress. We handle everything — from curated tastings to full vineyard retreats. What size group are you working with?",
+  wine_format: {
+    message: "Are you looking for in-person, virtual, or hybrid?",
     options: [
-      { label: "Small (2–15)" },
-      { label: "Medium (16–40)" },
-      { label: "Large (41–100)" },
-      { label: "100+" }
+      { label: "In-person" },
+      { label: "Virtual" },
+      { label: "Hybrid" }
     ],
-    next: "wine_cta",
+    next: "wine_date",
     tag: "Sales_SipClub"
   },
 
-  wine_private: {
-    message: "Love it! We also do intimate private tastings, date nights, and special celebrations. Want to hear more?",
+  wine_date: {
+    message: "Do you have a preferred date or timeframe?",
     options: [
-      { label: "Yes, tell me more",  next: "wine_cta" },
-      { label: "Go to Sip Club",     next: "sip_club" },
-      { label: "Back to menu",       next: "mainMenu" }
+      { label: "I have a date in mind" },
+      { label: "Next 1–3 months" },
+      { label: "3–6 months out" },
+      { label: "Still exploring" }
     ],
+    next: "wine_preferences",
     tag: "Sales_SipClub"
   },
 
-  wine_cta: {
-    message: "Here's what we can do next:",
+  wine_preferences: {
+    message: "Any preferences? (regions, styles, beginner vs experienced)",
     options: [
-      { label: "Customize an experience",  next: "lead_capture" },
-      { label: "Ask a question",           next: "faq_wine" },
-      { label: "Contact our team",         next: "human" }
+      { label: "Beginner-friendly" },
+      { label: "Intermediate" },
+      { label: "Advanced / connoisseur" },
+      { label: "No preference" }
     ],
+    next: "wine_lead_capture",
     tag: "Sales_SipClub"
+  },
+
+  wine_lead_capture: {
+    message: "Amazing! We'll curate a tasting experience tailored to your group. Where should we send the details?",
+    form: true,
+    formFields: ["email"],
+    tag: "Lead_Capture"
   },
 
   sip_club: {
@@ -296,7 +422,127 @@ const knowledge = {
   },
 
   /* -------------------------------------------------------
-     5. PRICING, BOOKING & LOGISTICS
+     5. NOT SURE YET — HELP ME DECIDE
+     ------------------------------------------------------- */
+  not_sure: {
+    message: "No problem — that's what we're here for. What's the main goal?",
+    options: [
+      { label: "Team Bonding" },
+      { label: "Client Engagement" },
+      { label: "Celebration" },
+      { label: "Gifting" },
+      { label: "Not Sure" }
+    ],
+    next: "not_sure_size",
+    tag: "Sales_Event"
+  },
+
+  not_sure_size: {
+    message: "Roughly how many people?",
+    options: [
+      { label: "Under 15" },
+      { label: "15–30" },
+      { label: "30–50" },
+      { label: "50–100" },
+      { label: "100+" },
+      { label: "Not sure yet" }
+    ],
+    next: "not_sure_timeline",
+    tag: "Sales_Event"
+  },
+
+  not_sure_timeline: {
+    message: "Do you have a timeframe in mind?",
+    options: [
+      { label: "This month" },
+      { label: "Next 1–3 months" },
+      { label: "3–6 months" },
+      { label: "Not yet" }
+    ],
+    next: "not_sure_vibe",
+    tag: "Sales_Event"
+  },
+
+  not_sure_vibe: {
+    message: "Would you prefer something more relaxed or more structured?",
+    options: [
+      { label: "Relaxed" },
+      { label: "Structured" },
+      { label: "A mix of both" },
+      { label: "Open to ideas" }
+    ],
+    next: "not_sure_lead_capture",
+    tag: "Sales_Event"
+  },
+
+  not_sure_lead_capture: {
+    message: "Based on this, I already have a few strong ideas for you. Where should we send them?",
+    form: true,
+    formFields: ["email"],
+    tag: "Lead_Capture"
+  },
+
+  /* -------------------------------------------------------
+     HUMAN HANDOFF
+     ------------------------------------------------------- */
+  human: {
+    message: "Happy to connect you directly — would you prefer a quick call or email follow-up?",
+    options: [
+      { label: "📞 Call",              next: "human_contact" },
+      { label: "📧 Email",             next: "human_contact" },
+      { label: "💬 Chat on WhatsApp",  next: "_whatsapp" }
+    ],
+    tag: "Support_General"
+  },
+
+  human_contact: {
+    message: "What's the best contact info?",
+    form: true,
+    formFields: ["name", "email", "phone"],
+    tag: "Lead_Capture"
+  },
+
+  /* -------------------------------------------------------
+     6. SOMETHING ELSE / FALLBACK
+     ------------------------------------------------------- */
+  something_else: {
+    message: "No problem! Here are a few things I can help with. Or feel free to type your question below.",
+    options: [
+      { label: "Browse FAQs",         next: "faq_main" },
+      { label: "Talk to our team",    next: "human" },
+      { label: "Back to main menu",   next: "mainMenu" }
+    ],
+    tag: "Support_General"
+  },
+
+  /* -------------------------------------------------------
+     LEAD CAPTURE FORMS (generic, used by FAQ CTAs)
+     ------------------------------------------------------- */
+  lead_capture: {
+    message: "Please share your details and we'll follow up within 24 hours.",
+    form: true,
+    formFields: ["name", "email"],
+    tag: "Lead_Capture"
+  },
+
+  lead_capture_phone: {
+    message: "We'd love to chat! Please share your info and preferred call time.",
+    form: true,
+    formFields: ["name", "email", "phone", "company"],
+    tag: "Lead_Capture"
+  },
+
+  /* -------------------------------------------------------
+     CONSULTATION BOOKING (Calendly)
+     ------------------------------------------------------- */
+  consultation_booking: {
+    message: "Let's find a time to chat! You can book a consultation directly on our calendar — pick whatever time works best for you:",
+    calendly: "https://calendly.com/marte",
+    tag: "Lead_Capture"
+  },
+
+  /* -------------------------------------------------------
+     PRICING, BOOKING & LOGISTICS (kept for FAQ routing)
      ------------------------------------------------------- */
   pricing: {
     message: "Everything we do is customized — no cookie-cutter packages here. What would you like to know?",
@@ -311,7 +557,7 @@ const knowledge = {
   },
 
   pricing_info: {
-    message: "Our pricing is customized based on your event scope, goals, guest count, location, and customization level.\n\nBecause every experience is different, we don’t list fixed prices in-chat. If you share a few details (date/timeframe, group size, city, and what you’re aiming for), we’ll put together a clear custom quote — and we’ll work within your budget wherever possible.",
+    message: "Our pricing is customized based on your event scope, goals, guest count, location, and customization level.\n\nBecause every experience is different, we don't list fixed prices in-chat. If you share a few details (date/timeframe, group size, city, and what you're aiming for), we'll put together a clear custom quote — and we'll work within your budget wherever possible.",
     options: [
       { label: "Request a custom quote",   next: "lead_capture" },
       { label: "How does booking work?",   next: "booking_stage" },
@@ -342,60 +588,6 @@ const knowledge = {
       { label: "Talk to a human",            next: "human" }
     ],
     tag: "Support_Pricing"
-  },
-
-  /* -------------------------------------------------------
-     6. SOMETHING ELSE / FALLBACK
-     ------------------------------------------------------- */
-  something_else: {
-    message: "No problem! Here are a few things I can help with. Or feel free to type your question below.",
-    options: [
-      { label: "Browse FAQs",         next: "faq_main" },
-      { label: "Talk to our team",    next: "human" },
-      { label: "Back to main menu",   next: "mainMenu" }
-    ],
-    tag: "Support_General"
-  },
-
-  /* -------------------------------------------------------
-     HUMAN HANDOFF
-     ------------------------------------------------------- */
-  human: {
-    message: "Absolutely! Our team is here for you. How would you like to connect?",
-    options: [
-      { label: "📧 Have someone email me",    next: "lead_capture" },
-      { label: "📞 Request a call back",       next: "lead_capture_phone" },
-      { label: "📅 Book a consultation",       next: "consultation_booking" },
-      { label: "💬 Chat on WhatsApp",          next: "_whatsapp" },
-      { label: "Not right now",                next: "mainMenu" }
-    ],
-    tag: "Support_General"
-  },
-
-  /* -------------------------------------------------------
-     LEAD CAPTURE FORMS
-     ------------------------------------------------------- */
-  lead_capture: {
-    message: "Please share your details and we'll follow up within 24 hours.",
-    form: true,
-    formFields: ["name", "email"],
-    tag: "Lead_Capture"
-  },
-
-  lead_capture_phone: {
-    message: "We'd love to chat! Please share your info and preferred call time.",
-    form: true,
-    formFields: ["name", "email", "phone", "company"],
-    tag: "Lead_Capture"
-  },
-
-  /* -------------------------------------------------------
-     CONSULTATION BOOKING (Calendly)
-     ------------------------------------------------------- */
-  consultation_booking: {
-    message: "Let's find a time to chat! You can book a consultation directly on our calendar — pick whatever time works best for you:",
-    calendly: "https://calendly.com/marte",
-    tag: "Lead_Capture"
   },
 
   /* -------------------------------------------------------
@@ -711,7 +903,7 @@ const knowledge = {
     tag: "Support_FAQ"
   },
   faq_sc5: {
-    message: "Sip Club pricing depends on factors like your plan (monthly vs. quarterly), number of bottles, wine style preferences, and delivery details.\n\nFor the most accurate info, share what you’re looking for and we’ll recommend an option that fits — including corporate/employee program pricing if that applies.",
+    message: "Sip Club pricing depends on factors like your plan (monthly vs. quarterly), number of bottles, wine style preferences, and delivery details.\n\nFor the most accurate info, share what you're looking for and we'll recommend an option that fits — including corporate/employee program pricing if that applies.",
     options: [{ label: "More questions", next: "faq_sip_club" }, { label: "Join Sip Club", next: "lead_capture" }, { label: "Back to menu", next: "mainMenu" }],
     tag: "Support_FAQ"
   },
