@@ -416,6 +416,28 @@ const UI = (() => {
     if (ratingEl) ratingEl.classList.add("hidden");
   }
 
+  /* ======================================================
+     FORM SUCCESS ANIMATION
+     ====================================================== */
+
+  /**
+   * Display a brief checkmark success animation inside the message area.
+   * Auto-removes itself after the animation completes (~1.8s).
+   */
+  function showFormSuccess() {
+    const el = document.createElement("div");
+    el.className = "form-success";
+    el.innerHTML =
+      '<svg class="form-success__check" viewBox="0 0 52 52" aria-hidden="true">' +
+        '<circle class="form-success__circle" cx="26" cy="26" r="25" fill="none"/>' +
+        '<path class="form-success__tick" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>' +
+      '</svg>' +
+      '<span class="form-success__text">Submitted!</span>';
+    messagesEl.appendChild(el);
+    scrollToBottom();
+    setTimeout(() => el.remove(), 2200);
+  }
+
   /* ---- Public API ---- */
   return {
     $,
@@ -432,6 +454,7 @@ const UI = (() => {
     renderCalendlyPrompt,
     renderFAQResults,
     showRating,
-    hideRating
+    hideRating,
+    showFormSuccess
   };
 })();
