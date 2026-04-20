@@ -297,6 +297,12 @@ html, body {
   outline-offset: 2px;
 }
 
+.lang-btn {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
 /* ---------- MESSAGES ---------- */
 #chat-messages {
   flex: 1;
