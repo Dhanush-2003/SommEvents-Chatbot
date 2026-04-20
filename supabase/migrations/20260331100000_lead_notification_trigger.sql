@@ -38,14 +38,27 @@ BEGIN
 
   email_body :=
     '<div style="font-family:sans-serif;max-width:500px;">' ||
-    '<h2 style="color:#850003;">New Lead from SommEvents Chatbot</h2>' ||
+    '<h2 style="color:#4A5D4E;">New Lead from SommEvents Chatbot</h2>' ||
     '<table style="border-collapse:collapse;width:100%;">' ||
     '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Name</td>'        || '<td style="padding:8px 12px;">' || COALESCE(NEW.name, '—')                || '</td></tr>' ||
     '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Email</td>'       || '<td style="padding:8px 12px;">' || COALESCE(NEW.email, '—')               || '</td></tr>' ||
     '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Phone</td>'       || '<td style="padding:8px 12px;">' || COALESCE(NEW.phone, '—')               || '</td></tr>' ||
     '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Consultation</td>'|| '<td style="padding:8px 12px;">' || COALESCE(NEW.consultation_time, '—')   || '</td></tr>' ||
     '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Captured</td>'    || '<td style="padding:8px 12px;">' || COALESCE(NEW.captured_at::TEXT, '—')   || '</td></tr>' ||
-    '</table></div>';
+    '</table>';
+
+  IF NEW.context IS NOT NULL THEN
+    email_body := email_body ||
+      '<h3 style="color:#4A5D4E;margin-top:20px;">Conversation Context</h3>' ||
+      '<table style="border-collapse:collapse;width:100%;">' ||
+      '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Flow Path</td>'   || '<td style="padding:8px 12px;">' || COALESCE(array_to_string(ARRAY(SELECT jsonb_array_elements_text(NEW.context->'path')), ' → '), '—') || '</td></tr>' ||
+      '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Intent Tags</td>' || '<td style="padding:8px 12px;">' || COALESCE(array_to_string(ARRAY(SELECT DISTINCT jsonb_array_elements_text(NEW.context->'tags')), ', '), '—') || '</td></tr>' ||
+      '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Messages</td>'    || '<td style="padding:8px 12px;">' || COALESCE((NEW.context->>'messageCount'), '—') || '</td></tr>' ||
+      '<tr><td style="padding:8px 12px;font-weight:bold;color:#555;">Duration</td>'    || '<td style="padding:8px 12px;">' || COALESCE((NEW.context->>'duration'), '—') || 's</td></tr>' ||
+      '</table>';
+  END IF;
+
+  email_body := email_body || '</div>';
 
   BEGIN
     PERFORM extensions.http_post(
