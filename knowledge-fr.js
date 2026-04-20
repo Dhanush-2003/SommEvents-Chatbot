@@ -45,7 +45,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "event_date_check",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 1, totalSteps: 8
   },
 
   event_date_check: {
@@ -55,25 +56,29 @@ const knowledgeFr = {
       { label: "J'ai un mois / une saison", next: "event_date_month" },
       { label: "J'explore encore",           next: "event_date_exploring" }
     ],
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 2, totalSteps: 8
   },
 
   event_date_specific: {
     message: "Quelle date envisagez-vous ?",
     freeTextNext: "event_guests",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 3, totalSteps: 8
   },
 
   event_date_month: {
     message: "Quel mois ou quelle période visez-vous ?",
     freeTextNext: "event_guests",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 3, totalSteps: 8
   },
 
   event_date_exploring: {
     message: "Pas de souci — à peu près quand souhaitez-vous organiser l'événement ?",
     freeTextNext: "event_guests",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 3, totalSteps: 8
   },
 
   event_guests: {
@@ -86,7 +91,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "event_location",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 4, totalSteps: 8
   },
 
   event_location: {
@@ -99,7 +105,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "event_support",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 5, totalSteps: 8
   },
 
   event_support: {
@@ -111,7 +118,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "event_budget",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 6, totalSteps: 8
   },
 
   event_budget: {
@@ -123,7 +131,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "event_atmosphere",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 7, totalSteps: 8
   },
 
   event_atmosphere: {
@@ -135,7 +144,8 @@ const knowledgeFr = {
       { label: "Sur mesure / pas encore sûr(e)" }
     ],
     next: "event_lead_capture",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 8, totalSteps: 8
   },
 
   event_lead_capture: {
@@ -157,7 +167,8 @@ const knowledgeFr = {
       { label: "Pas sûr(e)" }
     ],
     next: "tb_group_size",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 1, totalSteps: 5
   },
 
   tb_group_size: {
@@ -170,7 +181,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "tb_setting",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 2, totalSteps: 5
   },
 
   tb_setting: {
@@ -182,7 +194,8 @@ const knowledgeFr = {
       { label: "Flexible" }
     ],
     next: "tb_budget",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 3, totalSteps: 5
   },
 
   tb_budget: {
@@ -195,7 +208,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "tb_timeline",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 4, totalSteps: 5
   },
 
   tb_timeline: {
@@ -207,7 +221,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "tb_lead_capture",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 5, totalSteps: 5
   },
 
   tb_lead_capture: {
@@ -230,7 +245,8 @@ const knowledgeFr = {
       { label: "Occasion spéciale" }
     ],
     next: "gifting_quantity",
-    tag: "Sales_Gifting"
+    tag: "Sales_Gifting",
+    step: 1, totalSteps: 6
   },
 
   gifting_quantity: {
@@ -243,7 +259,8 @@ const knowledgeFr = {
       { label: "100+" }
     ],
     next: "gifting_style",
-    tag: "Sales_Gifting"
+    tag: "Sales_Gifting",
+    step: 2, totalSteps: 6
   },
 
   gifting_style: {
@@ -254,7 +271,8 @@ const knowledgeFr = {
       { label: "Pas sûr(e)" }
     ],
     next: "gifting_budget",
-    tag: "Sales_Gifting"
+    tag: "Sales_Gifting",
+    step: 3, totalSteps: 6
   },
 
   gifting_budget: {
@@ -266,7 +284,8 @@ const knowledgeFr = {
       { label: "250 $+" }
     ],
     next: "gifting_alcohol",
-    tag: "Sales_Gifting"
+    tag: "Sales_Gifting",
+    step: 4, totalSteps: 6
   },
 
   gifting_alcohol: {
@@ -277,7 +296,8 @@ const knowledgeFr = {
       { label: "Un mélange des deux" }
     ],
     next: "gifting_delivery",
-    tag: "Sales_Gifting"
+    tag: "Sales_Gifting",
+    step: 5, totalSteps: 6
   },
 
   gifting_delivery: {
@@ -290,7 +310,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "gifting_lead_capture",
-    tag: "Sales_Gifting"
+    tag: "Sales_Gifting",
+    step: 6, totalSteps: 6
   },
 
   gifting_lead_capture: {
@@ -312,7 +333,8 @@ const knowledgeFr = {
       { label: "Cadeau vinicole",             next: "gifting" },
       { label: "J'aimerais en savoir plus",   next: "faq_wine" }
     ],
-    tag: "Sales_SipClub"
+    tag: "Sales_SipClub",
+    step: 1, totalSteps: 5
   },
 
   wine_participants: {
@@ -324,7 +346,8 @@ const knowledgeFr = {
       { label: "50+" }
     ],
     next: "wine_format",
-    tag: "Sales_SipClub"
+    tag: "Sales_SipClub",
+    step: 2, totalSteps: 5
   },
 
   wine_format: {
@@ -335,7 +358,8 @@ const knowledgeFr = {
       { label: "Hybride" }
     ],
     next: "wine_date",
-    tag: "Sales_SipClub"
+    tag: "Sales_SipClub",
+    step: 3, totalSteps: 5
   },
 
   wine_date: {
@@ -347,7 +371,8 @@ const knowledgeFr = {
       { label: "J'explore encore" }
     ],
     next: "wine_preferences",
-    tag: "Sales_SipClub"
+    tag: "Sales_SipClub",
+    step: 4, totalSteps: 5
   },
 
   wine_preferences: {
@@ -359,7 +384,8 @@ const knowledgeFr = {
       { label: "Pas de préférence" }
     ],
     next: "wine_lead_capture",
-    tag: "Sales_SipClub"
+    tag: "Sales_SipClub",
+    step: 5, totalSteps: 5
   },
 
   wine_lead_capture: {
@@ -403,7 +429,8 @@ const knowledgeFr = {
       { label: "Pas sûr(e)" }
     ],
     next: "not_sure_size",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 1, totalSteps: 4
   },
 
   not_sure_size: {
@@ -417,7 +444,8 @@ const knowledgeFr = {
       { label: "Pas encore sûr(e)" }
     ],
     next: "not_sure_timeline",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 2, totalSteps: 4
   },
 
   not_sure_timeline: {
@@ -429,7 +457,8 @@ const knowledgeFr = {
       { label: "Pas encore" }
     ],
     next: "not_sure_vibe",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 3, totalSteps: 4
   },
 
   not_sure_vibe: {
@@ -441,7 +470,8 @@ const knowledgeFr = {
       { label: "Ouvert aux idées" }
     ],
     next: "not_sure_lead_capture",
-    tag: "Sales_Event"
+    tag: "Sales_Event",
+    step: 4, totalSteps: 4
   },
 
   not_sure_lead_capture: {

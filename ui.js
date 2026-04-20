@@ -416,6 +416,46 @@ const UI = (() => {
     if (ratingEl) ratingEl.classList.add("hidden");
   }
 
+  /* ======================================================
+     PROGRESS BAR
+     ====================================================== */
+
+  let progressEl = null;
+
+  /**
+   * Show or update a step progress bar above the message area.
+   * @param {number} step  - Current step (1-based)
+   * @param {number} total - Total steps in the funnel
+   */
+  function renderProgressBar(step, total) {
+    if (!progressEl) {
+      progressEl = document.createElement("div");
+      progressEl.className = "progress-bar";
+      progressEl.setAttribute("role", "progressbar");
+      messagesEl.parentNode.insertBefore(progressEl, messagesEl);
+    }
+
+    const pct = Math.round((step / total) * 100);
+    progressEl.setAttribute("aria-valuenow", step);
+    progressEl.setAttribute("aria-valuemin", "1");
+    progressEl.setAttribute("aria-valuemax", total);
+
+    progressEl.innerHTML =
+      '<div class="progress-bar__track">' +
+        '<div class="progress-bar__fill" style="width:' + pct + '%"></div>' +
+      '</div>' +
+      '<span class="progress-bar__label">Step ' + step + ' of ' + total + '</span>';
+
+    progressEl.classList.remove("hidden");
+  }
+
+  /**
+   * Hide the progress bar (e.g. when leaving a funnel).
+   */
+  function hideProgressBar() {
+    if (progressEl) progressEl.classList.add("hidden");
+  }
+
   /* ---- Public API ---- */
   return {
     $,
@@ -432,6 +472,8 @@ const UI = (() => {
     renderCalendlyPrompt,
     renderFAQResults,
     showRating,
-    hideRating
+    hideRating,
+    renderProgressBar,
+    hideProgressBar
   };
 })();
