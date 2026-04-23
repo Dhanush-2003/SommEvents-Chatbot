@@ -155,18 +155,23 @@ GROUP BY lead_captured;
 
 ### 6. Who submitted their contact info?
 
-Shows all leads (name, email, phone) with the most recent first:
+Shows all leads (name, email, phone) with the conversation context they went through:
 
 ```sql
 SELECT
   name,
   email,
   phone,
+  context->>'path' AS conversation_path,
+  context->>'tags' AS intent_tags,
+  context->>'duration' AS seconds_in_chat,
   captured_at
 FROM leads
 ORDER BY captured_at DESC
 LIMIT 50;
 ```
+
+> **Tip:** The `conversation_path` column shows the exact screens the person visited before filling out the form. The `intent_tags` show what they were interested in (e.g. Sales_Event, Sales_Gifting).
 
 ---
 

@@ -178,7 +178,13 @@ const Analytics = (() => {
         email: data.email,
         phone: data.phone,
         consultation_time: data.consultationTime,
-        captured_at: new Date(data.capturedAt || Date.now()).toISOString()
+        captured_at: new Date(data.capturedAt || Date.now()).toISOString(),
+        context: {
+          path: session.path,
+          tags: session.tags,
+          messageCount: session.messageCount,
+          duration: Math.round((Date.now() - session.startedAt) / 1000)
+        }
       }]).then(({ error }) => {
         if (error) log('SUPABASE_ERROR', error);
       });
