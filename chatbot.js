@@ -338,7 +338,16 @@
 
     // 2. Calendly booking prompt
     if (node.calendly) {
-      UI.renderCalendlyPrompt(node.calendly, () => {
+      let calendlyUrl = node.calendly;
+      const ld = Analytics.getSession().leadData;
+      if (ld) {
+        const params = new URLSearchParams();
+        if (ld.name)  params.set("name", ld.name);
+        if (ld.email) params.set("email", ld.email);
+        const qs = params.toString();
+        if (qs) calendlyUrl += (calendlyUrl.includes("?") ? "&" : "?") + qs;
+      }
+      UI.renderCalendlyPrompt(calendlyUrl, () => {
         addBotMessage("Your booking page is open in a new tab. Once you've picked a time, you're all set! Is there anything else I can help with?");
         UI.renderButtons(
           [{ label: "Back to main menu", next: "mainMenu" }, { label: "I'm all set!", next: "_end" }],
