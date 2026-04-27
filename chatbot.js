@@ -291,6 +291,13 @@
     // Track in analytics
     Analytics.trackNode(nodeKey, node.tag);
 
+    // Show / hide progress bar for multi-step funnels
+    if (node.step && node.totalSteps) {
+      UI.renderProgressBar(node.step, node.totalSteps);
+    } else {
+      UI.hideProgressBar();
+    }
+
     // Show typing indicator, then reveal the message after TYPING_DELAY
     UI.showTyping();
     setTimeout(() => {

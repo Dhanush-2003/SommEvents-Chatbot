@@ -303,6 +303,38 @@ html, body {
   letter-spacing: 0.3px;
 }
 
+/* ---------- PROGRESS BAR ---------- */
+.progress-bar {
+  padding: 8px 16px 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  animation: fadeIn 0.3s ease;
+}
+
+.progress-bar__track {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--burgundy) 0%, var(--gold) 100%);
+  transition: width 0.4s var(--ease);
+}
+
+.progress-bar__label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
 /* ---------- MESSAGES ---------- */
 #chat-messages {
   flex: 1;
