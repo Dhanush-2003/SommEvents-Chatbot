@@ -153,10 +153,19 @@
     currentNodeKey = prev.nodeKey;
     updateBackButton();
 
-    // Rebuild actions for the previous node (does not re-send bot message)
-    UI.clearActions();
+    // Update progress bar for the previous node
     const node = activeKnowledge[currentNodeKey];
-    if (node) renderNodeActions(node, currentNodeKey);
+    if (node) {
+      if (node.step && node.totalSteps) {
+        UI.renderProgressBar(node.step, node.totalSteps);
+      } else {
+        UI.hideProgressBar();
+      }
+      // Rebuild actions for the previous node (does not re-send bot message)
+      renderNodeActions(node, currentNodeKey);
+    } else {
+      UI.clearActions();
+    }
   }
 
   /* ======================================================
@@ -699,14 +708,14 @@
 
     // --- 9. About / who are you ---
     if (matchesAny(lower, ABOUT_PATTERNS)) {
-      addBotMessage("SommEvents is Ontario's premier corporate event planning and wine experience company! With 10+ years of experience, we specialize in creating thoughtful, elevated events — no generic experiences here. We handle everything from corporate retreats and team building to custom gifting and sommelier-led wine tastings. 🍷\n\nWhat would you like to explore?");
+      addBotMessage("SommEvents is Ontario's premier corporate event planning and wine experience company! With 10+ years of experience, we specialize in creating thoughtful, elevated events — from intimate team experiences to large-scale corporate functions. We blend culinary excellence, wine expertise, and strategic planning to deliver unforgettable moments. Whether you're looking to strengthen your team bond, celebrate milestones, or gift something special, we've got you covered!");
       renderNodeActions(activeKnowledge["mainMenu"], "mainMenu");
       return;
     }
 
     // --- 10. Location ---
     if (matchesAny(lower, LOCATION_PATTERNS)) {
-      addBotMessage("We're based in Ontario, Canada, and serve clients across the country! We can plan in-person events throughout Ontario and offer virtual experiences Canada-wide. For specific location questions, our team can give you the details.\n\nWant to explore our services or connect with our team?");
+      addBotMessage("We're based in Ontario, Canada, and serve clients across the country! We can plan in-person events throughout Ontario and offer virtual experiences Canada-wide. For specific locations or custom arrangements, our team can help customize something perfect for you.");
       UI.renderButtons(
         [{ label: "Explore services", next: "mainMenu" }, { label: "Talk to our team", next: "human" }],
         (opt) => { addUserMessage(opt.label); renderNode(opt.next); }
@@ -780,7 +789,7 @@
       renderNode("wine");
       return;
     }
-    if (lower.includes("price") || lower.includes("cost") || lower.includes("budget") || lower.includes("how much") || lower.includes("affordable") || lower.includes("expensive") || lower.includes("rate")) {
+    if (lower.includes("price") || lower.includes("cost") || lower.includes("budget") || lower.includes("how much") || lower.includes("affordable") || lower.includes("expensive")) {
       addBotMessage("Great question! Our pricing is customized based on your needs. Let me walk you through it.");
       renderNode("pricing");
       return;
