@@ -211,6 +211,7 @@
     }
     updateBackButton();
     inputEl.focus();
+    resetIdleTimer();
   }
 
   /**
@@ -244,6 +245,8 @@
     Analytics.resetSession();
     currentNodeKey = "mainMenu";
     updateBackButton();
+    idleNudgeSent = false;
+    clearTimeout(idleTimer);
     renderNode("mainMenu");
   }
 
@@ -975,6 +978,48 @@
     }
     showEndRating();
   }
+
+  /* ======================================================
+     IDLE RE-ENGAGEMENT NUDGE
+     ====================================================== */
+  const IDLE_TIMEOUT = 120000; // 2 minutes
+  let idleTimer = null;
+  let idleNudgeSent = false;
+
+  function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    if (idleNudgeSent) return;
+    if (panel.classList.contains("hidden")) return;
+
+    idleTimer = setTimeout(() => {
+      if (panel.classList.contains("hidden")) return;
+      if (currentNodeKey === "mainMenu" || currentNodeKey === "mainMenu_return") return;
+      idleNudgeSent = true;
+
+      const nudges = [
+        "Still there? No rush — I'm here whenever you're ready to continue!",
+        "Take your time! If you have any questions, I'm right here.",
+        "Hey! Just checking in — would you like to keep going or explore something else?"
+      ];
+      addBotMessage(nudges[Math.floor(Math.random() * nudges.length)]);
+      UI.renderButtons(
+        [{ label: "Let's continue", next: currentNodeKey }, { label: "Back to menu", next: "mainMenu" }],
+        (opt) => {
+          addUserMessage(opt.label);
+          if (opt.next === currentNodeKey) {
+            const node = activeKnowledge[currentNodeKey];
+            if (node) { UI.clearActions(); renderNodeActions(node, currentNodeKey); }
+          } else {
+            renderNode(opt.next);
+          }
+        }
+      );
+    }, IDLE_TIMEOUT);
+  }
+
+  ["click", "keydown", "touchstart"].forEach(evt => {
+    panel.addEventListener(evt, resetIdleTimer, { passive: true });
+  });
 
   /* ======================================================
      ESCALATION LISTENERS
