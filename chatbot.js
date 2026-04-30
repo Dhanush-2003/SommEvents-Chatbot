@@ -396,6 +396,7 @@
         addUserMessage(parts.join(" — "));
 
         Analytics.trackLead(data);
+        UI.showFormSuccess();
 
         const confirmMsg = "✅ Thanks! Our team will follow up within 24 hours. Is there anything else I can help with?";
 
